@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dice Haven • V2 Island Strategy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500;600&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; overflow: hidden; }
+        .header-font { font-family: 'Playfair Display', serif; }
+
+        .ocean-bg {
+            background: radial-gradient(circle at 50% 50%, #0c4a6e 0%, #082f4b 60%, #020617 100%);
+        }
+
+        .die {
+            width: 55px; height: 55px;
+            background: white; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 30px; border: 3px solid #854d0e;
+            box-shadow: 0 4px 0 #854d0e;
+        }
+        
+        .die.rolling { animation: dieRoll 0.2s infinite; }
+        @keyframes dieRoll {
+            0% { transform: translateY(0) rotate(0); }
+            50% { transform: translateY(-10px) rotate(15deg); }
+            100% { transform: translateY(0) rotate(-15deg); }
+        }
+
+        .placement-node { cursor: pointer; transition: all 0.2s; }
+        .placement-node:hover { transform: scale(1.2); filter: brightness(1.2); }
+        
+        .build-btn.active { outline: 3px solid #fbbf24; background: #92400e !important; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100">
+
+    <div id="home-screen" class="fixed inset-0 z-50 bg-gradient-to-br from-amber-900 to-blue-900 flex items-center justify-center p-6">
+        <div class="bg-white/10 backdrop-blur-md border border-white/20 p-12 rounded-3xl text-center max-w-lg shadow-2xl">
+            <h1 class="header-font text-6xl mb-4 text-amber-400">DICE HAVEN</h1>
+            <p class="text-blue-100 mb-8 italic text-lg">V2: The Island Expansion</p>
+            
+            <div class="space-y-4 mb-8">
+                <p class="text-sm uppercase tracking-widest text-amber-200">Select Players</p>
+                <div class="flex justify-center gap-4">
+                    <button onclick="initGame(2)" class="px-6 py-3 bg-white text-amber-900 rounded-xl font-bold hover:bg-amber-100 transition">2 Players</button>
+                    <button onclick="initGame(3)" class="px-6 py-3 bg-white text-amber-900 rounded-xl font-bold hover:bg-amber-100 transition">3 Players</button>
+                    <button onclick="initGame(4)" class="px-6 py-3 bg-white text-amber-900 rounded-xl font-bold hover:bg-amber-100 transition">4 Players</button>
+                </div>
+            </div>
+            <button onclick="toggleRules(true)" class="text-amber-200 underline">View Full Rules</button>
+        </div>
+    </div>
+
+    <div id="rules-modal" class="hidden fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-4">
+        <div class="bg-white text-slate-900 p-8 rounded-3xl max-w-2xl max-h-[80vh] overflow-y-auto">
+            <h2 class="header-font text-3xl mb-4 text-amber-800">Game Rules</h2>
+            <div class="space-y-4 text-sm leading-relaxed">
+                <p><strong>Turn Flow:</strong> Roll 5 dice to gather resources. Use resources to build developments on the board to earn Victory Points (VP).</p>
+                <ul class="list-disc pl-5 space-y-2">
+                    <li><strong>Roads (1 Wood, 1 Brick):</strong> Must connect to existing roads. (First road is free placement).</li>
+                    <li><strong>Towns (1 Wood, 1 Brick, 1 Sheep, 1 Wheat):</strong> Must be placed on an intersection touching your road.</li>
+                    <li><strong>Cities (2 Wheat, 3 Ore):</strong> Upgrade an existing town. Doubles VP.</li>
+                    <li><strong>Workers (1 Ore, 1 Sheep, 1 Wheat):</strong> Place on a tile center. Gives +1 of that tile's resource every turn.</li>
+                </ul>
+                <p><strong>Gold:</strong> Trade 2 Gold for 1 of any other resource in the shop.</p>
+                <p><strong>Winning:</strong> The game ends after 30 total turns. Highest VP wins!</p>
+            </div>
+            <button onclick="toggleRules(false)" class="mt-6 w-full py-3 bg-amber-800 text-white rounded-xl font-bold">Close Rules</button>
+        </div>
+    </div>
+
+    <div class="h-screen flex flex-col">
+        <div class="bg-slate-800/80 backdrop-blur-md p-4 flex justify-between items-center border-b border-white/10">
+            <div>
+                <span class="text-amber-400 font-bold uppercase tracking-tighter">Turn:</span>
+                <span id="turn-display" class="text-xl font-mono">1/30</span>
+            </div>
+            <div id="turn-announcer" class="text-2xl header-font text-white">Player 1's Turn</div>
+            <button onclick="location.reload()" class="text-xs bg-red-900/50 px-3 py-1 rounded">Reset Game</button>
+        </div>
+
+        <div class="flex-1 flex overflow-hidden">
+            <div class="w-72 bg-slate-900/50 p-4 border-r border-white/10 flex flex-col gap-4">
+                <h3 class="text-xs font-bold text-slate-400 uppercase">Build Costs</h3>
+                <div id="build-menu" class="space-y-2">
+                    </div>
+                
+                <h3 class="text-xs font-bold text-slate-400 uppercase mt-4">Gold Trade (2:1)</h3>
+                <div id="trade-menu" class="grid grid-cols-2 gap-2">
+                    </div>
+            </div>
+
+            <div class="flex-1 ocean-bg relative flex items-center justify-center p-8">
+                <div id="board-container" class="relative">
+                    <svg id="board-svg" width="600" height="600" viewBox="0 0 600 600"></svg>
+                </div>
+                <div id="action-prompt" class="hidden absolute top-8 bg-amber-500 text-amber-950 px-6 py-2 rounded-full font-bold shadow-lg animate-bounce">
+                    Select a location on the board
+                </div>
+            </div>
+
+            <div class="w-64 bg-slate-900/50 p-4 border-l border-white/10 flex flex-col gap-4">
+                <h3 class="text-xs font-bold text-slate-400 uppercase">Scoreboard</h3>
+                <div id="scores" class="space-y-3"></div>
+            </div>
+        </div>
+
+        <div class="bg-slate-800 p-6 flex items-center justify-between border-t border-white/20">
+            <div class="flex gap-4">
+                <button id="roll-btn" onclick="rollDice()" class="bg-amber-500 hover:bg-amber-400 text-amber-950 font-black px-10 py-4 rounded-2xl shadow-xl transition-all active:scale-95">ROLL DICE</button>
+                <div id="dice-area" class="flex gap-2"></div>
+            </div>
+
+            <div class="flex-1 mx-10 bg-black/20 p-4 rounded-2xl flex justify-around items-center border border-white/5">
+                <div id="res-display" class="flex gap-6 text-xl">
+                    </div>
+            </div>
+
+            <button onclick="nextTurn()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-10 py-4 rounded-2xl shadow-xl transition-all">END TURN</button>
+        </div>
+    </div>
+
+    <script>
+        const CONFIG = {
+            maxTurns: 30,
+            hexSize: 55,
+            resources: ['wood', 'sheep', 'brick', 'wheat', 'ore', 'gold'],
+            emojis: { wood:'🌲', sheep:'🐑', brick:'🧱', wheat:'🌾', ore:'⛰️', gold:'💰', road:'🛤️', town:'🏠', city:'🏛️', worker:'🧑‍🏭' },
+            costs: {
+                road: { wood: 1, brick: 1 },
+                town: { wood: 1, brick: 1, sheep: 1, wheat: 1 },
+                city: { wheat: 2, ore: 3 },
+                worker: { ore: 1, sheep: 1, wheat: 1 }
+            },
+            playerColors: ['#ef4444', '#3b82f6', '#10b981', '#f59e0b']
+        };
+
+        let state = {
+            numPlayers: 2,
+            currentPlayer: 0,
+            turnCount: 1,
+            players: [],
+            tiles: [],
+            nodes: [], // intersections
+            edges: [], // road paths
+            rolled: false,
+            activeBuild: null
+        };
+
+        function initGame(n) {
+            state.numPlayers = n;
+            for(let i=0; i<n; i++) {
+                state.players.push({
+                    id: i,
+                    resources: { wood: 0, sheep: 0, brick: 0, wheat: 0, ore: 0, gold: 0 },
+                    vp: 0,
+                    roads: [],
+                    towns: [],
+                    cities: [],
+                    workers: []
+                });
+            }
+            document.getElementById('home-screen').classList.add('hidden');
+            generateBoard();
+            updateUI();
+        }
+
+        function generateBoard() {
+            const svg = document.getElementById('board-svg');
+            const center = { x: 300, y: 300 };
+            const layout = [3, 4, 5, 4, 3]; // Catan-style island
+            let idCounter = 0;
+
+            const resourcePool = ['wood','wood','wood','wood','sheep','sheep','sheep','sheep','brick','brick','brick','brick','wheat','wheat','wheat','wheat','ore','ore','ore'];
+            shuffle(resourcePool);
+
+            let rowY = center.y - (2 * CONFIG.hexSize * 1.5);
+            layout.forEach((count, rowIndex) => {
+                let rowX = center.x - ((count - 1) * CONFIG.hexSize * Math.sqrt(3) / 2);
+                for(let i=0; i<count; i++) {
+                    const tile = {
+                        id: idCounter,
+                        x: rowX + (i * CONFIG.hexSize * Math.sqrt(3)),
+                        y: rowY,
+                        res: resourcePool[idCounter] || 'gold',
+                        owner: null
+                    };
+                    state.tiles.push(tile);
+                    drawHex(tile);
+                    idCounter++;
+                }
+                rowY += CONFIG.hexSize * 1.5;
+            });
+            
+            mapIntersections();
+        }
+
+        function drawHex(tile) {
+            const svg = document.getElementById('board-svg');
+            const points = [];
+            for (let i = 0; i < 6; i++) {
+                const angle = (Math.PI / 180) * (60 * i - 30);
+                points.push(`${tile.x + CONFIG.hexSize * Math.cos(angle)},${tile.y + CONFIG.hexSize * Math.sin(angle)}`);
+            }
+            
+            const poly = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+            poly.setAttribute("points", points.join(' '));
+            poly.setAttribute("class", "fill-slate-700 stroke-slate-500 hover:fill-slate-600 transition-colors cursor-pointer");
+            poly.setAttribute("stroke-width", "2");
+            poly.onclick = () => handleBoardClick('worker', tile);
+            
+            const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            text.setAttribute("x", tile.x);
+            text.setAttribute("y", tile.y + 8);
+            text.setAttribute("text-anchor", "middle");
+            text.setAttribute("class", "text-2xl pointer-events-none select-none");
+            text.textContent = CONFIG.emojis[tile.res];
+
+            svg.appendChild(poly);
+            svg.appendChild(text);
+        }
+
+        function mapIntersections() {
+            // Find all unique corners (nodes) and edges
+            state.tiles.forEach(t => {
+                for(let i=0; i<6; i++) {
+                    const angle = (Math.PI / 180) * (60 * i - 30);
+                    const nx = Math.round(t.x + CONFIG.hexSize * Math.cos(angle));
+                    const ny = Math.round(t.y + CONFIG.hexSize * Math.sin(angle));
+                    
+                    if(!state.nodes.find(n => n.x === nx && n.y === ny)) {
+                        state.nodes.push({ x: nx, y: ny, owner: null, type: null });
+                    }
+                }
+            });
+
+            // Draw interaction points
+            const svg = document.getElementById('board-svg');
+            state.nodes.forEach(node => {
+                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                circle.setAttribute("cx", node.x);
+                circle.setAttribute("cy", node.y);
+                circle.setAttribute("r", "8");
+                circle.setAttribute("class", "fill-white/20 hover:fill-amber-400 cursor-pointer transition-all");
+                circle.onclick = () => handleBoardClick('node', node);
+                svg.appendChild(circle);
+                node.el = circle;
+            });
+            
+            // Generate Edges (Lines between nodes)
+            // Simplified for road placement: Clickable midpoints between nodes
+            state.nodes.forEach((n1, i) => {
+                state.nodes.slice(i+1).forEach(n2 => {
+                    const dist = Math.sqrt((n1.x-n2.x)**2 + (n1.y-n2.y)**2);
+                    if(dist > CONFIG.hexSize - 5 && dist < CONFIG.hexSize + 5) {
+                        const edge = { x: (n1.x+n2.x)/2, y: (n1.y+n2.y)/2, n1, n2, owner: null };
+                        state.edges.push(edge);
+                        
+                        const line = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                        line.setAttribute("cx", edge.x);
+                        line.setAttribute("cy", edge.y);
+                        line.setAttribute("r", "5");
+                        line.setAttribute("class", "fill-white/10 hover:fill-blue-400 cursor-pointer");
+                        line.onclick = () => handleBoardClick('edge', edge);
+                        svg.appendChild(line);
+                        edge.el = line;
+                    }
+                });
+            });
+        }
+
+        function rollDice() {
+            if(state.rolled) return;
+            const area = document.getElementById('dice-area');
+            area.innerHTML = '';
+            state.rolled = true;
+            
+            let count = 0;
+            const timer = setInterval(() => {
+                area.innerHTML = '';
+                for(let i=0; i<5; i++) {
+                    const res = CONFIG.resources[Math.floor(Math.random() * 6)];
+                    const d = document.createElement('div');
+                    d.className = 'die rolling';
+                    d.textContent = CONFIG.emojis[res];
+                    area.appendChild(d);
+                }
+                count++;
+                if(count > 10) {
+                    clearInterval(timer);
+                    finalizeRoll();
+                }
+            }, 100);
+        }
+
+        function finalizeRoll() {
+            const p = state.players[state.currentPlayer];
+            const diceResults = [];
+            const area = document.getElementById('dice-area');
+            area.innerHTML = '';
+            
+            for(let i=0; i<5; i++) {
+                const res = CONFIG.resources[Math.floor(Math.random() * 6)];
+                diceResults.push(res);
+                p.resources[res]++;
+                
+                const d = document.createElement('div');
+                d.className = 'die';
+                d.textContent = CONFIG.emojis[res];
+                area.appendChild(d);
+            }
+
+            // Worker Income
+            p.workers.forEach(tileId => {
+                const tile = state.tiles.find(t => t.id === tileId);
+                p.resources[tile.res]++;
+            });
+
+            updateUI();
+        }
+
+        function updateUI() {
+            const p = state.players[state.currentPlayer];
+            
+            // Turn Info
+            document.getElementById('turn-display').textContent = `${state.turnCount}/30`;
+            document.getElementById('turn-announcer').textContent = `Player ${state.currentPlayer + 1}'s Turn`;
+            document.getElementById('turn-announcer').style.color = CONFIG.playerColors[state.currentPlayer];
+
+            // Resources
+            const resArea = document.getElementById('res-display');
+            resArea.innerHTML = CONFIG.resources.map(r => `
+                <div class="flex items-center gap-2">
+                    <span>${CONFIG.emojis[r]}</span>
+                    <span class="font-bold">${p.resources[r]}</span>
+                </div>
+            `).join('');
+
+            // Shop
+            const shop = document.getElementById('build-menu');
+            shop.innerHTML = Object.entries(CONFIG.costs).map(([item, cost]) => {
+                const canAfford = Object.entries(cost).every(([r, amt]) => p.resources[r] >= amt);
+                return `
+                    <button onclick="startBuild('${item}')" 
+                        class="build-btn w-full p-3 rounded-xl flex justify-between items-center transition-all ${canAfford ? 'bg-slate-700 hover:bg-slate-600' : 'bg-slate-800 opacity-50 cursor-not-allowed'}"
+                        id="btn-${item}">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">${CONFIG.emojis[item]}</span>
+                            <span class="capitalize font-bold">${item}</span>
+                        </div>
+                        <div class="text-[10px] flex gap-1">
+                            ${Object.entries(cost).map(([r, a]) => `<span>${a}${CONFIG.emojis[r]}</span>`).join('')}
+                        </div>
+                    </button>
+                `;
+            }).join('');
+
+            // Trade
+            const trade = document.getElementById('trade-menu');
+            trade.innerHTML = CONFIG.resources.filter(r => r !== 'gold').map(r => `
+                <button onclick="tradeGold('${r}')" class="p-2 bg-slate-800 rounded-lg text-xs hover:bg-amber-900 transition ${p.resources.gold >= 2 ? '' : 'opacity-30'}">
+                    2💰 ➔ 1${CONFIG.emojis[r]}
+                </button>
+            `).join('');
+
+            // Scores
+            const scoreArea = document.getElementById('scores');
+            scoreArea.innerHTML = state.players.map(pl => `
+                <div class="p-3 rounded-xl border-2 ${pl.id === state.currentPlayer ? 'bg-white/5 border-amber-500' : 'border-transparent'}" style="color: ${CONFIG.playerColors[pl.id]}">
+                    <div class="flex justify-between font-bold">
+                        <span>Player ${pl.id + 1}</span>
+                        <span>${pl.vp} VP</span>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('roll-btn').disabled = state.rolled;
+            document.getElementById('roll-btn').style.opacity = state.rolled ? 0.5 : 1;
+        }
+
+        function startBuild(item) {
+            const p = state.players[state.currentPlayer];
+            const cost = CONFIG.costs[item];
+            if(!Object.entries(cost).every(([r, amt]) => p.resources[r] >= amt)) return;
+            
+            state.activeBuild = item;
+            document.getElementById('action-prompt').classList.remove('hidden');
+            document.querySelectorAll('.build-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`btn-${item}`).classList.add('active');
+        }
+
+        function handleBoardClick(type, data) {
+            if(!state.activeBuild) return;
+            const p = state.players[state.currentPlayer];
+
+            // Logical Rules
+            if(state.activeBuild === 'road' && type === 'edge') {
+                if(data.owner !== null) return;
+                // Connection rule
+                if(p.roads.length > 0) {
+                    const connected = p.roads.some(r => r.n1 === data.n1 || r.n1 === data.n2 || r.n2 === data.n1 || r.n2 === data.n2);
+                    if(!connected) return alert("Must connect to your existing roads!");
+                }
+                data.owner = state.currentPlayer;
+                p.roads.push(data);
+                placeVisual(data.x, data.y, CONFIG.emojis.road);
+                completePurchase('road');
+            } 
+            else if(state.activeBuild === 'town' && type === 'node') {
+                if(data.owner !== null) return;
+                const touchesRoad = p.roads.some(r => r.n1 === data || r.n2 === data);
+                if(!touchesRoad) return alert("Towns must be on your roads!");
+                data.owner = state.currentPlayer;
+                data.type = 'town';
+                p.towns.push(data);
+                placeVisual(data.x, data.y, CONFIG.emojis.town);
+                completePurchase('town');
+            }
+            else if(state.activeBuild === 'city' && type === 'node') {
+                if(data.owner !== state.currentPlayer || data.type !== 'town') return alert("Select your town to upgrade!");
+                data.type = 'city';
+                p.cities.push(data);
+                placeVisual(data.x, data.y, CONFIG.emojis.city);
+                completePurchase('city');
+            }
+            else if(state.activeBuild === 'worker' && type === 'worker') {
+                if(data.owner !== null) return;
+                data.owner = state.currentPlayer;
+                p.workers.push(data.id);
+                placeVisual(data.x + 15, data.y - 15, CONFIG.emojis.worker);
+                completePurchase('worker');
+            }
+        }
+
+        function placeVisual(x, y, emoji) {
+            const svg = document.getElementById('board-svg');
+            const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            t.setAttribute("x", x);
+            t.setAttribute("y", y + 5);
+            t.setAttribute("text-anchor", "middle");
+            t.setAttribute("class", "text-xl pointer-events-none drop-shadow-md");
+            t.textContent = emoji;
+            svg.appendChild(t);
+        }
+
+        function completePurchase(item) {
+            const p = state.players[state.currentPlayer];
+            const cost = CONFIG.costs[item];
+            Object.entries(cost).forEach(([r, amt]) => p.resources[r] -= amt);
+            
+            // Score
+            if(item === 'road') p.vp += 1;
+            if(item === 'town') p.vp += 2;
+            if(item === 'city') p.vp += 3; // +3 for upgrade
+            if(item === 'worker') p.vp += 1;
+
+            state.activeBuild = null;
+            document.getElementById('action-prompt').classList.add('hidden');
+            updateUI();
+        }
+
+        function tradeGold(target) {
+            const p = state.players[state.currentPlayer];
+            if(p.resources.gold >= 2) {
+                p.resources.gold -= 2;
+                p.resources[target]++;
+                updateUI();
+            }
+        }
+
+        function nextTurn() {
+            state.rolled = false;
+            state.activeBuild = null;
+            state.currentPlayer = (state.currentPlayer + 1) % state.numPlayers;
+            if(state.currentPlayer === 0) state.turnCount++;
+            
+            if(state.turnCount > CONFIG.maxTurns) {
+                alert("Game Over! Check scores.");
+                return;
+            }
+            
+            document.getElementById('dice-area').innerHTML = '';
+            document.getElementById('action-prompt').classList.add('hidden');
+            updateUI();
+        }
+
+        function toggleRules(show) {
+            document.getElementById('rules-modal').classList.toggle('hidden', !show);
+        }
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+    </script>
+</body>
+</html>
+
