@@ -1,1587 +1,423 @@
-<!DOCTYPE html>
+
+<!doctype html><html dir="auto"><head><meta http-equiv="Content-Security-Policy" content="default-src 'unsafe-inline' 'unsafe-eval' https: data: blob:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<script id="__base44_dark_class__">document.documentElement.classList.remove('dark');</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Wix+Madefor+Text:wght@400;500;600;700&display=swap">
+<style id="__base44_editor_theme__">
+:root {
+  --background: 38 27% 94%;
+  --foreground: 0 0% 4%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 4%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 4%;
+  --primary: 21 42% 55%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 96%;
+  --secondary-foreground: 0 0% 9%;
+  --muted: 39 17% 93%;
+  --muted-foreground: 0 0% 45%;
+  --accent: 0 0% 96%;
+  --accent-foreground: 0 0% 9%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 0 0% 98%;
+  --input: 0 0% 98%;
+  --ring: 21 42% 55%;
+  --radius: 0.5rem;
+  color-scheme: light;
+}
+.dark {
+  --background: 220 5% 11%;
+  --foreground: 0 0% 99%;
+  --card: 0 1% 14%;
+  --card-foreground: 0 0% 99%;
+  --popover: 0 1% 14%;
+  --popover-foreground: 0 0% 99%;
+  --primary: 21 42% 55%;
+  --primary-foreground: 0 0% 99%;
+  --secondary: 0 0% 18%;
+  --secondary-foreground: 0 0% 99%;
+  --muted: 0 0% 18%;
+  --muted-foreground: 0 0% 65%;
+  --accent: 0 0% 18%;
+  --accent-foreground: 0 0% 99%;
+  --destructive: 0 62% 30%;
+  --destructive-foreground: 0 0% 99%;
+  --border: 0 0% 16%;
+  --input: 0 0% 16%;
+  --ring: 21 42% 55%;
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; }
+/* shadcn's base layer: default every element's border-color to the theme
+   token. Without this, Tailwind's bare `border` utility only sets width and
+   the color falls back to currentColor (near-black text) — so the model's
+   `border` cards render heavy/dark and the `--border` value is ignored.
+   Explicit `border-{color}` utilities and inline styles still override. */
+*, *::before, *::after { border-color: hsl(var(--border)); }
+html, body {
+  margin: 0 !important;
+  padding: 0;
+  overflow: auto !important;
+  /* Inline card: transparent, so the real chat surface (a gradient, not the
+     single flat `--background` stop) shows straight through and the artifact
+     reads as inline chat content in both themes. Standalone saved file: opaque
+     `--background` so it stays readable on its own page. `--card` stays
+     elevated for emphasis blocks (stat tiles, panels) so hierarchy reads. */
+  background: hsl(var(--background)) !important;
+  color: hsl(var(--foreground));
+  font-family: 'WixMadeforText', 'Wix Madefor Text', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+/* 8px (vs 16px) — minimal breathing room from the iframe edge so
+   tightly-composed dashboards don't ship a fat empty halo at the top
+   before their first element. LLMs add their own inner spacing. */
+body { padding: 8px; }
+code, kbd, pre, samp { font-family: 'WixMadeforMonospace', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+a { color: hsl(var(--primary)); }
+hr { border: 0; border-top: 1px solid hsl(var(--border)); }
+h1, h2, h3, h4, h5, h6 { font-weight: 600; color: hsl(var(--foreground)); }
+</style>
+<script id="__base44_tw_config__">
+window.tailwind = window.tailwind || {};
+window.tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        border: 'hsl(var(--border))',
+        input: 'hsl(var(--input))',
+        ring: 'hsl(var(--ring))',
+        background: 'hsl(var(--background))',
+        foreground: 'hsl(var(--foreground))',
+        primary: { DEFAULT: 'hsl(var(--primary))', foreground: 'hsl(var(--primary-foreground))' },
+        secondary: { DEFAULT: 'hsl(var(--secondary))', foreground: 'hsl(var(--secondary-foreground))' },
+        destructive: { DEFAULT: 'hsl(var(--destructive))', foreground: 'hsl(var(--destructive-foreground))' },
+        muted: { DEFAULT: 'hsl(var(--muted))', foreground: 'hsl(var(--muted-foreground))' },
+        accent: { DEFAULT: 'hsl(var(--accent))', foreground: 'hsl(var(--accent-foreground))' },
+        popover: { DEFAULT: 'hsl(var(--popover))', foreground: 'hsl(var(--popover-foreground))' },
+        card: { DEFAULT: 'hsl(var(--card))', foreground: 'hsl(var(--card-foreground))' },
+      },
+      // A bare `border` / `divide-*` (no color) falls back to Tailwind
+      // preflight's DEFAULT, which is a FIXED gray-200 (#e5e7eb) — subtle on the
+      // light card but near-white glare on the dark card. The `colors.border`
+      // map above only creates the `border-border` class; it does NOT set the
+      // uncolored default. Point the DEFAULT at the theme token so an uncolored
+      // border adapts to dark mode like the rest of the palette. (Explicit
+      // `border-primary` etc. still override.)
+      borderColor: { DEFAULT: 'hsl(var(--border))' },
+      divideColor: { DEFAULT: 'hsl(var(--border))' },
+      borderRadius: {
+        lg: 'var(--radius)',
+        md: 'calc(var(--radius) - 2px)',
+        sm: 'calc(var(--radius) - 4px)',
+      },
+      fontFamily: {
+        // Same two-name stack as `FONT_SANS_STACK` above. The
+        // sandboxed null-origin iframe lands on `Wix Madefor Text`
+        // (Google Fonts' name); `WixMadeforText` is here only for
+        // defense-in-depth in case the iframe ever runs same-origin.
+        sans: ['WixMadeforText', 'Wix Madefor Text', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+        mono: ['WixMadeforMonospace', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+      },
+    },
+  },
+};
+</script>
+<script src="https://cdn.tailwindcss.com" id="__base44_tw_cdn__"></script></head><body><!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ShardForge – Fractal Investment Platform</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
-  <style>
-    * { font-family: 'Inter', sans-serif; }
-    :root {
-      --shard-blue: #38bdf8;
-      --shard-deep: #0ea5e9;
-      --shard-dark: #0c1a2e;
-      --shard-panel: #0f2133;
-      --shard-card: #112842;
-      --shard-border: #1e3a5a;
-      --shard-glow: rgba(56, 189, 248, 0.35);
-    }
-    body { background: var(--shard-dark); color: #e2e8f0; overflow-x: hidden; }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: inherit; padding: 1.5rem; }
 
-    /* Crystal animations */
-    @keyframes crystalFloat {
-      0%, 100% { transform: translateY(0px) rotate(0deg); }
-      33% { transform: translateY(-8px) rotate(1deg); }
-      66% { transform: translateY(-4px) rotate(-0.5deg); }
-    }
-    @keyframes crystalPulse {
-      0%, 100% { filter: drop-shadow(0 0 8px rgba(56,189,248,0.4)); }
-      50% { filter: drop-shadow(0 0 20px rgba(56,189,248,0.8)) drop-shadow(0 0 40px rgba(56,189,248,0.3)); }
-    }
-    @keyframes shimmer {
-      0% { background-position: -200% 0; }
-      100% { background-position: 200% 0; }
-    }
-    @keyframes pulse-glow {
-      0%, 100% { box-shadow: 0 0 10px rgba(56,189,248,0.3); }
-      50% { box-shadow: 0 0 30px rgba(56,189,248,0.6), 0 0 60px rgba(56,189,248,0.2); }
-    }
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes particle-drift {
-      0% { transform: translateY(0) translateX(0) scale(1); opacity: 0.6; }
-      100% { transform: translateY(-100vh) translateX(20px) scale(0.5); opacity: 0; }
-    }
+  h1 { font-size: 1.5rem; font-weight: 700; color: hsl(var(--foreground)); margin-bottom: .25rem; }
+  .subtitle { font-size: .875rem; color: hsl(var(--muted-foreground)); margin-bottom: 1.75rem; }
 
-    .crystal-img {
-      animation: crystalFloat 6s ease-in-out infinite, crystalPulse 3s ease-in-out infinite;
-    }
-    .shard-card {
-      background: var(--shard-card);
-      border: 1px solid var(--shard-border);
-      border-radius: 16px;
-      transition: all 0.3s ease;
-    }
-    .shard-card:hover {
-      border-color: var(--shard-blue);
-      box-shadow: 0 0 20px rgba(56,189,248,0.15);
-      transform: translateY(-2px);
-    }
-    .glow-btn {
-      background: linear-gradient(135deg, #0ea5e9, #38bdf8);
-      border: none;
-      border-radius: 12px;
-      color: #fff;
-      font-weight: 700;
-      padding: 12px 28px;
-      cursor: pointer;
-      transition: all 0.3s;
-      position: relative;
-      overflow: hidden;
-    }
-    .glow-btn:hover {
-      box-shadow: 0 0 25px rgba(56,189,248,0.5);
-      transform: translateY(-1px);
-    }
-    .glow-btn::after {
-      content: '';
-      position: absolute;
-      top: 0; left: -100%;
-      width: 100%; height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-      animation: shimmer 2s infinite;
-    }
-    .nav-link {
-      padding: 8px 16px;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: all 0.2s;
-      color: #94a3b8;
-      font-weight: 500;
-    }
-    .nav-link:hover, .nav-link.active {
-      background: rgba(56,189,248,0.15);
-      color: #38bdf8;
-    }
-    .stat-card {
-      background: linear-gradient(135deg, #112842, #0f2133);
-      border: 1px solid var(--shard-border);
-      border-radius: 14px;
-      padding: 20px;
-      position: relative;
-      overflow: hidden;
-    }
-    .stat-card::before {
-      content: '';
-      position: absolute;
-      top: 0; right: 0;
-      width: 60px; height: 60px;
-      background: radial-gradient(circle, rgba(56,189,248,0.1), transparent);
-      border-radius: 50%;
-    }
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-    }
-    .badge-vacation { background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3); }
-    .badge-active { background: rgba(34,197,94,0.15); color: #22c55e; border: 1px solid rgba(34,197,94,0.3); }
-    .badge-funding { background: rgba(251,191,36,0.15); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
-    .badge-income { background: rgba(168,85,247,0.15); color: #a855f7; border: 1px solid rgba(168,85,247,0.3); }
-    .progress-bar {
-      height: 6px;
-      background: rgba(56,189,248,0.2);
-      border-radius: 3px;
-      overflow: hidden;
-    }
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #0ea5e9, #38bdf8);
-      border-radius: 3px;
-      transition: width 1s ease;
-    }
-    .tab-btn {
-      padding: 10px 20px;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: all 0.2s;
-      font-weight: 500;
-      border: 1px solid transparent;
-      background: transparent;
-      color: #64748b;
-    }
-    .tab-btn.active {
-      background: rgba(56,189,248,0.15);
-      border-color: rgba(56,189,248,0.3);
-      color: #38bdf8;
-    }
-    .tab-btn:hover:not(.active) {
-      color: #94a3b8;
-      background: rgba(255,255,255,0.05);
-    }
-    .input-field {
-      background: var(--shard-panel);
-      border: 1px solid var(--shard-border);
-      border-radius: 10px;
-      padding: 10px 14px;
-      color: #e2e8f0;
-      width: 100%;
-      transition: border-color 0.2s;
-    }
-    .input-field:focus {
-      outline: none;
-      border-color: #38bdf8;
-      box-shadow: 0 0 0 3px rgba(56,189,248,0.1);
-    }
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.7);
-      backdrop-filter: blur(4px);
-      z-index: 1000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-    .modal-box {
-      background: var(--shard-panel);
-      border: 1px solid var(--shard-border);
-      border-radius: 20px;
-      padding: 32px;
-      max-width: 560px;
-      width: 100%;
-      animation: fadeInUp 0.3s ease;
-      max-height: 90vh;
-      overflow-y: auto;
-    }
-    .particle {
-      position: fixed;
-      width: 3px; height: 3px;
-      background: #38bdf8;
-      border-radius: 50%;
-      pointer-events: none;
-      animation: particle-drift linear infinite;
-      opacity: 0.4;
-    }
-    .shard-night-badge {
-      background: linear-gradient(135deg, rgba(56,189,248,0.2), rgba(14,165,233,0.1));
-      border: 1px solid rgba(56,189,248,0.4);
-      border-radius: 10px;
-      padding: 8px 14px;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .calendar-day {
-      width: 36px; height: 36px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 8px;
-      font-size: 13px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .calendar-day.available:hover { background: rgba(56,189,248,0.2); color: #38bdf8; }
-    .calendar-day.booked-member { background: rgba(56,189,248,0.3); color: #38bdf8; border: 1px solid rgba(56,189,248,0.5); }
-    .calendar-day.booked-public { background: rgba(168,85,247,0.25); color: #a855f7; border: 1px solid rgba(168,85,247,0.4); }
-    .calendar-day.blocked { background: rgba(239,68,68,0.2); color: #ef4444; }
-    .calendar-day.selected { background: #0ea5e9; color: white; }
-    .calendar-day.range { background: rgba(56,189,248,0.15); color: #38bdf8; }
-    .calendar-day.today { border: 1px solid #38bdf8; }
-    .irr-breakdown {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 12px;
-    }
-    .irr-item {
-      background: rgba(56,189,248,0.07);
-      border: 1px solid rgba(56,189,248,0.15);
-      border-radius: 10px;
-      padding: 12px;
-      text-align: center;
-    }
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #1e3a5a; border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: #38bdf8; }
-    .hidden { display: none !important; }
-    @media (max-width: 768px) {
-      #page-booking .shard-card + .shard-card { margin-top: 0; }
-      div[style*="grid-template-columns: minmax(280px, 320px) 1fr"] {
-        grid-template-columns: 1fr !important;
-      }
-      div[style*="grid-template-columns:1fr 1fr"] {
-        grid-template-columns: 1fr !important;
-      }
-      #page-dashboard div[style*="grid-template-columns:1fr 1fr"] {
-        grid-template-columns: 1fr !important;
-      }
-    }
-    .fade-in { animation: fadeInUp 0.4s ease; }
-    .defi-glow { animation: pulse-glow 2s ease-in-out infinite; }
-    .chain-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 3px 8px;
-      border-radius: 6px;
-      font-size: 10px;
-      font-weight: 700;
-    }
-    .chain-eth { background: rgba(98,126,234,0.2); color: #627eea; }
-    .chain-poly { background: rgba(130,71,229,0.2); color: #8247e5; }
-  </style>
+  .section-title {
+    font-size: 1rem; font-weight: 700; color: hsl(var(--foreground));
+    margin: 1.75rem 0 .75rem;
+    display: flex; align-items: center; gap: .5rem;
+  }
+  .section-title .badge {
+    font-size: .65rem; font-weight: 600; padding: .2rem .5rem;
+    border-radius: 9999px; background: hsl(var(--primary)); color: hsl(var(--primary-foreground));
+    letter-spacing: .04em; text-transform: uppercase;
+  }
+  .section-title .badge.new {
+    background: hsl(142, 71%, 38%);
+  }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: .875rem; }
+
+  .card {
+    border-radius: .75rem; border: 1px solid hsl(var(--border));
+    background: hsl(var(--card)); color: hsl(var(--card-foreground));
+    padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: .45rem;
+  }
+  .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: .5rem; }
+  .card-name { font-size: .95rem; font-weight: 700; color: hsl(var(--foreground)); line-height: 1.3; }
+  .rank { font-size: .75rem; font-weight: 700; color: hsl(var(--muted-foreground)); flex-shrink: 0; }
+
+  .tags { display: flex; flex-wrap: wrap; gap: .35rem; }
+  .tag {
+    font-size: .68rem; font-weight: 600; padding: .15rem .45rem;
+    border-radius: 9999px; border: 1px solid hsl(var(--border));
+    color: hsl(var(--muted-foreground));
+  }
+  .tag.price { border-color: hsl(var(--primary) / .4); color: hsl(var(--primary)); }
+  .tag.players { border-color: hsl(var(--border)); }
+  .tag.freq { border-color: hsl(var(--border)); }
+
+  .desc { font-size: .8rem; color: hsl(var(--muted-foreground)); line-height: 1.5; }
+  .games-list { font-size: .78rem; color: hsl(var(--muted-foreground)); line-height: 1.6; padding-left: 1rem; }
+
+  .divider { border: none; border-top: 1px solid hsl(var(--border)); margin: 1.5rem 0 0; }
+
+  .note {
+    margin-top: 1.25rem;
+    font-size: .78rem; color: hsl(var(--muted-foreground));
+    background: hsl(var(--muted)); border-radius: .5rem;
+    padding: .75rem 1rem; line-height: 1.6;
+  }
+  .note strong { color: hsl(var(--foreground)); }
+</style>
 </head>
 <body>
 
-<!-- Floating particles -->
-<div id="particles"></div>
+<h1>🎯 Moscow English Activities Club</h1>
+<p class="subtitle">Ranked by popularity · All events conducted in English · Monetizable</p>
 
-<!-- NAVBAR -->
-<nav style="background: rgba(12,26,46,0.95); backdrop-filter: blur(20px); border-bottom: 1px solid #1e3a5a; position: sticky; top:0; z-index:100;">
-  <div style="max-width:1400px; margin:0 auto; padding:0 24px; display:flex; align-items:center; justify-content:space-between; height:64px;">
-    <div style="display:flex; align-items:center; gap:12px; cursor:pointer;" onclick="showPage('dashboard')">
-      <img src="https://media.base44.com/images/public/6a1162569478f4ba8a2f44ea/4cdab7879_IMG_2497.jpeg" style="height:36px; width:auto;" class="crystal-img" alt="ShardForge" />
-      <div>
-        <div style="font-size:18px; font-weight:800; color:#38bdf8; letter-spacing:-0.5px;">ShardForge</div>
-        <div style="font-size:10px; color:#475569; letter-spacing:1px; text-transform:uppercase;">Fractal Asset Platform</div>
-      </div>
-    </div>
-    <div style="display:flex; align-items:center; gap:4px;">
-      <div class="nav-link" id="nav-dashboard" onclick="showPage('dashboard')">📊 Dashboard</div>
-      <div class="nav-link" id="nav-pools" onclick="showPage('pools')">💎 Pools</div>
-      <div class="nav-link" id="nav-booking" onclick="showPage('booking')">🏖️ Shard Nights</div>
-      <div class="nav-link" id="nav-marketplace" onclick="showPage('marketplace')">🔄 Market</div>
-      <div class="nav-link" id="nav-defi" onclick="showPage('defi')">⛓️ DeFi</div>
-      <div class="nav-link" id="nav-learn" onclick="showPage('learn')">📚 Learn</div>
-    </div>
-    <div style="display:flex; align-items:center; gap:12px;">
-      <div class="shard-night-badge">
-        <img src="https://media.base44.com/images/public/6a1162569478f4ba8a2f44ea/4cdab7879_IMG_2497.jpeg" style="height:16px;" />
-        <span style="font-size:12px; font-weight:700; color:#38bdf8;">37 Shard Nights</span>
-      </div>
-      <div style="width:36px; height:36px; background: linear-gradient(135deg,#0ea5e9,#38bdf8); border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; cursor:pointer;">M</div>
-    </div>
-  </div>
-</nav>
-
-<!-- PAGE: DASHBOARD -->
-<div id="page-dashboard" class="hidden">
-  <div style="max-width:1400px; margin:0 auto; padding:32px 24px;">
-    <!-- Hero banner -->
-    <div style="background: linear-gradient(135deg, #0a1628 0%, #0c2040 50%, #0a1628 100%); border: 1px solid #1e3a5a; border-radius: 20px; padding: 40px; margin-bottom: 32px; position:relative; overflow:hidden;">
-      <div style="position:absolute; top:-40px; right:-40px; width:200px; height:200px; background: radial-gradient(circle, rgba(56,189,248,0.08), transparent); border-radius:50%;"></div>
-      <div style="position:absolute; bottom:-60px; left:30%; width:300px; height:300px; background: radial-gradient(circle, rgba(14,165,233,0.05), transparent); border-radius:50%;"></div>
-      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:24px;">
-        <div>
-          <div style="font-size:13px; color:#38bdf8; font-weight:600; letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;">Welcome back, Marvel</div>
-          <h1 style="font-size:36px; font-weight:900; color:#f1f5f9; line-height:1.1; margin-bottom:12px;">Your Shard Portfolio</h1>
-          <p style="color:#64748b; font-size:15px; max-width:500px;">Tokenized real assets. Weekly distributions. Shard Night access to premium properties.</p>
-          <div style="display:flex; gap:12px; margin-top:20px; flex-wrap:wrap;">
-            <button class="glow-btn" onclick="showPage('pools')">Browse Pools ✦</button>
-            <button onclick="showPage('booking')" style="padding:12px 24px; border-radius:12px; border:1px solid #1e3a5a; background:transparent; color:#94a3b8; cursor:pointer; font-weight:600; transition:all 0.2s;" onmouseover="this.style.borderColor='#38bdf8';this.style.color='#38bdf8'" onmouseout="this.style.borderColor='#1e3a5a';this.style.color='#94a3b8'">Book a Stay 🏖️</button>
-          </div>
-        </div>
-        <div style="display:flex; gap:20px; flex-wrap:wrap;">
-          <div style="text-align:center;">
-            <img src="https://media.base44.com/images/public/6a1162569478f4ba8a2f44ea/4cdab7879_IMG_2497.jpeg" style="height:120px; width:auto;" class="crystal-img" />
-          </div>
-          <div style="display:flex; flex-direction:column; gap:12px;">
-            <div class="stat-card" style="min-width:160px;">
-              <div style="font-size:11px; color:#64748b; text-transform:uppercase; letter-spacing:1px;">Portfolio Value</div>
-              <div style="font-size:28px; font-weight:800; color:#f1f5f9;">$135,086</div>
-              <div style="font-size:12px; color:#22c55e;">↑ +8.3% since entry</div>
-            </div>
-            <div class="stat-card">
-              <div style="font-size:11px; color:#64748b; text-transform:uppercase; letter-spacing:1px;">Shard Nights Left</div>
-              <div style="font-size:28px; font-weight:800; color:#38bdf8;">37</div>
-              <div style="font-size:12px; color:#64748b;">across all pools</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Stats row -->
-    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:32px;">
-      <div class="stat-card">
-        <div style="font-size:11px; color:#64748b; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Total Invested</div>
-        <div style="font-size:26px; font-weight:800; color:#f1f5f9;">$123,000</div>
-        <div style="font-size:12px; color:#22c55e; margin-top:4px;">↑ across 5 pools</div>
-      </div>
-      <div class="stat-card">
-        <div style="font-size:11px; color:#64748b; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Total Earned</div>
-        <div style="font-size:26px; font-weight:800; color:#22c55e;">$10,812</div>
-        <div style="font-size:12px; color:#64748b; margin-top:4px;">distributions + appreciation</div>
-      </div>
-      <div class="stat-card">
-        <div style="font-size:11px; color:#64748b; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Avg Effective IRR</div>
-        <div style="font-size:26px; font-weight:800; color:#38bdf8;">12.2%</div>
-        <div style="font-size:12px; color:#64748b; margin-top:4px;">incl. usage value</div>
-      </div>
-      <div class="stat-card">
-        <div style="font-size:11px; color:#64748b; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Usage Value</div>
-        <div style="font-size:26px; font-weight:800; color:#a855f7;">$4,258</div>
-        <div style="font-size:12px; color:#64748b; margin-top:4px;">shard nights redeemed</div>
-      </div>
-      <div class="stat-card">
-        <div style="font-size:11px; color:#64748b; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Next Distribution</div>
-        <div style="font-size:26px; font-weight:800; color:#fbbf24;">May 30</div>
-        <div style="font-size:12px; color:#64748b; margin-top:4px;">~$312 expected</div>
-      </div>
-      <div class="stat-card">
-        <div style="font-size:11px; color:#64748b; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">DeFi Locked</div>
-        <div style="font-size:26px; font-weight:800; color:#f97316;">$35,000</div>
-        <div style="font-size:12px; color:#64748b; margin-top:4px;">collateral in 2 pools</div>
-      </div>
-    </div>
-
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-bottom:32px;">
-      <!-- Holdings -->
-      <div class="shard-card" style="padding:24px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-          <h3 style="font-size:16px; font-weight:700; color:#f1f5f9;">My Shard Holdings</h3>
-          <span style="font-size:12px; color:#38bdf8; cursor:pointer;" onclick="showPage('pools')">View all →</span>
-        </div>
-        <div id="holdings-list"></div>
-      </div>
-
-      <!-- IRR Breakdown -->
-      <div class="shard-card" style="padding:24px;">
-        <h3 style="font-size:16px; font-weight:700; color:#f1f5f9; margin-bottom:8px;">Effective IRR Breakdown</h3>
-        <p style="font-size:12px; color:#64748b; margin-bottom:16px;">Your real return = income + appreciation + lifestyle value</p>
-        <canvas id="irrChart" height="200"></canvas>
-        <div class="irr-breakdown" style="margin-top:16px;">
-          <div class="irr-item">
-            <div style="font-size:18px; font-weight:800; color:#22c55e;">7.8%</div>
-            <div style="font-size:11px; color:#64748b; margin-top:4px;">Rental Income</div>
-          </div>
-          <div class="irr-item">
-            <div style="font-size:18px; font-weight:800; color:#38bdf8;">2.1%</div>
-            <div style="font-size:11px; color:#64748b; margin-top:4px;">Appreciation</div>
-          </div>
-          <div class="irr-item">
-            <div style="font-size:18px; font-weight:800; color:#a855f7;">2.3%</div>
-            <div style="font-size:11px; color:#64748b; margin-top:4px;">Shard Nights</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Upcoming bookings & distributions -->
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
-      <div class="shard-card" style="padding:24px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-          <h3 style="font-size:16px; font-weight:700; color:#f1f5f9;">Upcoming Stays</h3>
-          <button class="glow-btn" style="font-size:12px; padding:6px 14px;" onclick="showPage('booking')">Book Now</button>
-        </div>
-        <div id="upcoming-bookings"></div>
-      </div>
-      <div class="shard-card" style="padding:24px;">
-        <h3 style="font-size:16px; font-weight:700; color:#f1f5f9; margin-bottom:20px;">Recent Distributions</h3>
-        <div id="recent-distributions"></div>
-      </div>
-    </div>
-  </div>
+<!-- ───── TOP ACTIVITIES ───── -->
+<div class="section-title">
+  <span>⭐ Most Popular Activities</span>
 </div>
 
-<!-- PAGE: POOLS -->
-<div id="page-pools" class="hidden">
-  <div style="max-width:1400px; margin:0 auto; padding:32px 24px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:12px;">
-      <div>
-        <h1 style="font-size:28px; font-weight:800; color:#f1f5f9;">Investment Pools</h1>
-        <p style="color:#64748b; margin-top:4px;">Tokenized real assets — from $10. Weekly distributions. DeFi-enabled.</p>
-      </div>
-      <div style="display:flex; gap:8px; flex-wrap:wrap;">
-        <button class="tab-btn active" id="filter-all" onclick="filterPools('all')">All Pools</button>
-        <button class="tab-btn" id="filter-vacation" onclick="filterPools('vacation')">🏖️ Vacation</button>
-        <button class="tab-btn" id="filter-realestate" onclick="filterPools('realestate')">🏢 Real Estate</button>
-        <button class="tab-btn" id="filter-metals" onclick="filterPools('metals')">🥇 Metals</button>
-        <button class="tab-btn" id="filter-farmland" onclick="filterPools('farmland')">🌾 Farmland</button>
-      </div>
+<div class="grid">
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-name">Pub Quiz / Trivia Night</div>
+      <div class="rank">#1</div>
     </div>
-    <div id="pools-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap:24px; margin-top:24px;"></div>
+    <div class="tags">
+      <span class="tag price">₽600–900/person</span>
+      <span class="tag players">Teams of 4–8</span>
+      <span class="tag freq">Weekly</span>
+    </div>
+    <div class="desc">Teams compete across themed rounds — pop culture, history, science, Moscow expat life. Easy to scale, partner with a bar or café for free venue in exchange for footfall.</div>
   </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-name">Board Game Night</div>
+      <div class="rank">#2</div>
+    </div>
+    <div class="tags">
+      <span class="tag price">₽500–700/person</span>
+      <span class="tag players">6–20 players</span>
+      <span class="tag freq">Weekly</span>
+    </div>
+    <div class="desc">Casual mixed-game nights — Codenames, Taboo, Alias, Dixit. Low barrier to entry, huge repeat attendance. Works as a gateway event into social deduction nights.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-name">English Speaking Club</div>
+      <div class="rank">#3</div>
+    </div>
+    <div class="tags">
+      <span class="tag price">₽600/person</span>
+      <span class="tag players">10–30 people</span>
+      <span class="tag freq">2–4×/week</span>
+    </div>
+    <div class="desc">Facilitated conversation sessions with rotating partners. Proven model (ESC Moscow charges ₽600 and runs 4×/week). Excellent recurring revenue base with low overhead.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-name">Speed Friending / Networking</div>
+      <div class="rank">#4</div>
+    </div>
+    <div class="tags">
+      <span class="tag price">₽500–800/person</span>
+      <span class="tag players">20–50 people</span>
+      <span class="tag freq">Monthly</span>
+    </div>
+    <div class="desc">Timed 1-on-1 conversations with rotating partners. Hugely popular in the expat community — meets practical needs (loneliness, networking) in a fun format.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-name">English Comedy Night</div>
+      <div class="rank">#5</div>
+    </div>
+    <div class="tags">
+      <span class="tag price">₽800–1,500/person</span>
+      <span class="tag players">30–80 people</span>
+      <span class="tag freq">Monthly</span>
+    </div>
+    <div class="desc">Stand-up shows in English — already an active Moscow scene. Host open mic nights or bring in English-speaking comedians. High ticket price, strong shareable appeal.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-name">Escape Room (English)</div>
+      <div class="rank">#6</div>
+    </div>
+    <div class="tags">
+      <span class="tag price">₽1,200–1,800/person</span>
+      <span class="tag players">4–8/room</span>
+      <span class="tag freq">Monthly</span>
+    </div>
+    <div class="desc">Book English-friendly rooms in Moscow and run as a group booking event. Premium pricing, great for team-building and corporate spin-offs. Commission on group bookings possible.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-name">City Quest / Scavenger Hunt</div>
+      <div class="rank">#7</div>
+    </div>
+    <div class="tags">
+      <span class="tag price">₽700–1,000/person</span>
+      <span class="tag players">10–40 people</span>
+      <span class="tag freq">Monthly</span>
+    </div>
+    <div class="desc">Teams race around Moscow solving English-language clues at iconic landmarks. Combines sightseeing, exercise, and social bonding. Highly shareable on social media.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-name">English Cooking Class</div>
+      <div class="rank">#8</div>
+    </div>
+    <div class="tags">
+      <span class="tag price">₽1,500–2,500/person</span>
+      <span class="tag players">8–16 people</span>
+      <span class="tag freq">Monthly</span>
+    </div>
+    <div class="desc">Cook traditional Russian or international dishes together — entirely in English. Includes dining on what you made. High perceived value, strong word-of-mouth. Partner with a local chef.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-name">Wine / Craft Beer Tasting</div>
+      <div class="rank">#9</div>
+    </div>
+    <div class="tags">
+      <span class="tag price">₽1,200–2,000/person</span>
+      <span class="tag players">10–25 people</span>
+      <span class="tag freq">Monthly</span>
+    </div>
+    <div class="desc">Guided English-language tasting sessions — Georgian wine, Russian craft beer, or international selections. Relaxed atmosphere encourages conversation. Partner with wine shops or bars.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-name">Hiking / Day Trips</div>
+      <div class="rank">#10</div>
+    </div>
+    <div class="tags">
+      <span class="tag price">₽500–800/person</span>
+      <span class="tag players">10–30 people</span>
+      <span class="tag freq">Monthly</span>
+    </div>
+    <div class="desc">Guided walks in Moscow's forests and green spaces conducted in English. Low cost, high appeal. The Hikers club has run this model in Moscow for years. Great for all fitness levels.</div>
+  </div>
+
 </div>
 
-<!-- PAGE: BOOKING (SHARD NIGHTS) -->
-<div id="page-booking" class="hidden">
-  <div style="max-width:1400px; margin:0 auto; padding:32px 24px;">
-    <div style="margin-bottom:28px;">
-      <h1 style="font-size:28px; font-weight:800; color:#f1f5f9;">Shard Nights</h1>
-      <p style="color:#64748b; margin-top:4px;">Your ownership earns you priority access to vacation properties. Book before the public.</p>
-    </div>
+<!-- ───── SOCIAL DEDUCTION GAMES ───── -->
+<hr class="divider" />
 
-    <!-- Shard nights summary -->
-    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:16px; margin-bottom:32px;" id="nights-summary"></div>
-
-    <!-- Property selector + Calendar -->
-    <div style="display:grid; grid-template-columns: minmax(280px, 320px) 1fr; gap:24px; align-items:start; flex-wrap:wrap;">
-      <!-- Property list -->
-      <div class="shard-card" style="padding:20px;">
-        <h3 style="font-size:15px; font-weight:700; color:#f1f5f9; margin-bottom:16px;">Your Eligible Properties</h3>
-        <div id="property-list"></div>
-      </div>
-
-      <!-- Calendar -->
-      <div class="shard-card" style="padding:24px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-          <div>
-            <h3 style="font-size:16px; font-weight:700; color:#f1f5f9;" id="cal-property-name">Select a property</h3>
-            <p style="font-size:12px; color:#64748b; margin-top:2px;">Blue = member stay · Purple = public rental · Red = blocked</p>
-          </div>
-          <div style="display:flex; gap:8px; align-items:center;">
-            <button onclick="prevMonth()" style="width:32px; height:32px; border-radius:8px; border:1px solid #1e3a5a; background:transparent; color:#94a3b8; cursor:pointer; font-size:16px;">‹</button>
-            <span id="cal-month-label" style="font-size:14px; font-weight:600; color:#f1f5f9; min-width:120px; text-align:center;"></span>
-            <button onclick="nextMonth()" style="width:32px; height:32px; border-radius:8px; border:1px solid #1e3a5a; background:transparent; color:#94a3b8; cursor:pointer; font-size:16px;">›</button>
-          </div>
-        </div>
-        <div id="calendar-grid"></div>
-        <div style="margin-top:20px; padding-top:20px; border-top:1px solid #1e3a5a;" id="booking-form-area">
-          <div style="color:#64748b; font-size:13px; text-align:center;">Click on available dates to select your check-in date</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Active bookings -->
-    <div class="shard-card" style="padding:24px; margin-top:24px;">
-      <h3 style="font-size:16px; font-weight:700; color:#f1f5f9; margin-bottom:20px;">My Bookings</h3>
-      <div id="my-bookings-list"></div>
-    </div>
-  </div>
+<div class="section-title">
+  <span>🕵️ Social Deduction Games</span>
+  <span class="badge new">New</span>
 </div>
 
-<!-- PAGE: MARKETPLACE -->
-<div id="page-marketplace" class="hidden">
-  <div style="max-width:1400px; margin:0 auto; padding:32px 24px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:28px; flex-wrap:wrap; gap:12px;">
-      <div>
-        <h1 style="font-size:28px; font-weight:800; color:#f1f5f9;">Shard Marketplace</h1>
-        <p style="color:#64748b; margin-top:4px;">Buy and sell Shards. Listings may include transferred Shard Nights.</p>
-      </div>
-      <button class="glow-btn" onclick="openSellModal()">+ List Shards for Sale</button>
+<p class="desc" style="margin-bottom:.9rem; font-size:.82rem; color:hsl(var(--muted-foreground)); line-height:1.6;">
+  The original game of <strong style="color:hsl(var(--foreground))">Mafia was invented in Moscow in 1986</strong> at Moscow State University. These games demand persuasion, listening, bluffing, and reading people — perfect English communication practice disguised as pure fun.
+</p>
+
+<div class="grid">
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-name">Mafia</div>
+      <div class="rank">★★★★★</div>
     </div>
-    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap:20px;" id="marketplace-grid"></div>
+    <div class="tags">
+      <span class="tag players">8–20 players</span>
+      <span class="tag price">₽500–700/person</span>
+      <span class="tag freq">Weekly</span>
+    </div>
+    <div class="desc">The classic. Citizens vs. a secret Mafia — debate, argue, vote, and bluff your way to victory. Invented in Moscow, wildly popular internationally. A dedicated host/narrator is essential. Run with special characters (Doctor, Detective) for open events. Multiple rounds per session means high energy all night.</div>
   </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-name">Werewolf / Ultimate Werewolf</div>
+      <div class="rank">★★★★★</div>
+    </div>
+    <div class="tags">
+      <span class="tag players">8–35 players</span>
+      <span class="tag price">₽500–700/person</span>
+      <span class="tag freq">Weekly</span>
+    </div>
+    <div class="desc">Mafia's close cousin with rich role variety — Seers, Doctors, Hunters, Witches. Plays up to 35 people, making it ideal for large group events. One of the most widely recognised social deduction games globally. The "One Night" edition plays in just 10 minutes per round.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-name">The Resistance: Avalon</div>
+      <div class="rank">★★★★★</div>
+    </div>
+    <div class="tags">
+      <span class="tag players">5–10 players</span>
+      <span class="tag price">₽500–700/person</span>
+      <span class="tag freq">Weekly</span>
+    </div>
+    <div class="desc">No player elimination — everyone stays active all game. Knights vs. spies on quests. Considered one of the purest social deduction experiences: intensely strategic, conversation-heavy, and deeply replayable. Excellent for English practice as it demands precise, persuasive argument.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-name">Blood on the Clocktower</div>
+      <div class="rank">★★★★★</div>
+    </div>
+    <div class="tags">
+      <span class="tag players">7–20 players</span>
+      <span class="tag price">₽700–1,000/person</span>
+      <span class="tag freq">Bi-weekly</span>
+    </div>
+    <div class="desc">The gold standard of social deduction — richer roles, dead players still participate, and a Storyteller (you) shapes the game. Rated #1 on BoardGameGeek in its category. Premium experience: charge more, limit spots. Already played at ExpatEvents.org by the Moscow community.</desc>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-name">Coup / Secret Hitler</div>
+      <div class="rank">★★★★☆</div>
+    </div>
+    <div class="tags">
+      <span class="tag players">5–10 players</span>
+      <span class="tag price">₽400–600/person</span>
+      <span class="tag freq">Weekly</span>
+    </div>
+    <div class="desc">Coup: 15-minute bluffing card game — fast, ruthless, brilliant filler between larger games. Secret Hitler: Liberal vs Fascist factions across a political policy table — heavy on debate and persuasion, great for advanced English speakers. Both are highly repeatable in one evening.</div>
+  </div>
+
 </div>
 
-<!-- PAGE: DEFI -->
-<div id="page-defi" class="hidden">
-  <div style="max-width:1400px; margin:0 auto; padding:32px 24px;">
-    <div style="margin-bottom:28px;">
-      <h1 style="font-size:28px; font-weight:800; color:#f1f5f9;">⛓️ DeFi Collateral</h1>
-      <p style="color:#64748b; margin-top:4px;">Use your Shards as collateral in decentralized finance protocols. Earn while you borrow.</p>
-    </div>
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px; margin-bottom:24px;">
-      <div class="shard-card defi-glow" style="padding:28px;">
-        <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
-          <div style="width:48px; height:48px; background: linear-gradient(135deg, #627eea20, #627eea40); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:24px;">Ξ</div>
-          <div>
-            <div style="font-size:16px; font-weight:700; color:#f1f5f9;">Aave Integration</div>
-            <div style="font-size:12px; color:#64748b;">RMM-style lending market</div>
-          </div>
-          <span class="badge badge-active" style="margin-left:auto;">Live</span>
-        </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;">
-          <div style="background:rgba(56,189,248,0.07); border-radius:10px; padding:16px;">
-            <div style="font-size:11px; color:#64748b; margin-bottom:4px;">Collateral Deposited</div>
-            <div style="font-size:22px; font-weight:800; color:#38bdf8;">$35,000</div>
-            <div style="font-size:11px; color:#64748b;">3,500 Shards locked</div>
-          </div>
-          <div style="background:rgba(34,197,94,0.07); border-radius:10px; padding:16px;">
-            <div style="font-size:11px; color:#64748b; margin-bottom:4px;">Borrow Capacity</div>
-            <div style="font-size:22px; font-weight:800; color:#22c55e;">$24,500</div>
-            <div style="font-size:11px; color:#64748b;">70% LTV available</div>
-          </div>
-        </div>
-        <div style="margin-bottom:16px;">
-          <div style="display:flex; justify-content:space-between; font-size:12px; color:#64748b; margin-bottom:6px;">
-            <span>Health Factor</span>
-            <span style="color:#22c55e; font-weight:700;">2.14 (Safe)</span>
-          </div>
-          <div class="progress-bar">
-            <div class="progress-fill" style="width:47%; background: linear-gradient(90deg,#22c55e,#86efac);"></div>
-          </div>
-        </div>
-        <button class="glow-btn" style="width:100%; font-size:14px;" onclick="openDefiModal()">Manage Collateral</button>
-      </div>
-      <div class="shard-card" style="padding:28px;">
-        <h3 style="font-size:16px; font-weight:700; color:#f1f5f9; margin-bottom:20px;">Usage Rights During Collateralization</h3>
-        <div style="background:rgba(251,191,36,0.08); border:1px solid rgba(251,191,36,0.2); border-radius:12px; padding:16px; margin-bottom:16px;">
-          <div style="font-size:13px; font-weight:600; color:#fbbf24; margin-bottom:8px;">⚠️ Important Policy</div>
-          <div style="font-size:13px; color:#94a3b8; line-height:1.6;">When Shards are used as DeFi collateral, Shard Nights usage rights are <strong style="color:#f1f5f9;">proportionally reduced</strong> based on the collateralization ratio. Heavy collateralization (>80% of holdings) may temporarily suspend booking privileges until collateral is released.</div>
-        </div>
-        <div id="defi-rights-table"></div>
-      </div>
-    </div>
-    <div class="shard-card" style="padding:24px;">
-      <h3 style="font-size:16px; font-weight:700; color:#f1f5f9; margin-bottom:20px;">Collateral Positions</h3>
-      <div id="defi-positions"></div>
-    </div>
-  </div>
+<!-- ───── MONETISATION NOTE ───── -->
+<div class="note">
+  <strong>Monetisation model:</strong> Charge ₽500–700/person for regular weekly games nights (Mafia, Werewolf, Avalon). Run premium one-off events (Blood on the Clocktower, Murder Mystery) at ₽800–1,200. Offer a monthly membership pass (e.g. ₽2,500/month for unlimited entry) to drive loyalty and predictable revenue. Social deduction nights are cheap to run — you own the games, the venue is a café — making them some of the highest-margin events in the schedule.
 </div>
 
-<!-- PAGE: LEARN -->
-<div id="page-learn" class="hidden">
-  <div style="max-width:1000px; margin:0 auto; padding:32px 24px;">
-    <h1 style="font-size:28px; font-weight:800; color:#f1f5f9; margin-bottom:8px;">📚 Education Center</h1>
-    <p style="color:#64748b; margin-bottom:32px;">Understand how ShardForge works and how Shard Nights boost your real return.</p>
-
-    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:32px;" id="learn-tabs">
-      <button class="tab-btn active" onclick="showLearn('basics')">Basics</button>
-      <button class="tab-btn" onclick="showLearn('nights')">Shard Nights</button>
-      <button class="tab-btn" onclick="showLearn('irr')">Effective IRR</button>
-      <button class="tab-btn" onclick="showLearn('defi')">DeFi</button>
-      <button class="tab-btn" onclick="showLearn('fractal')">Fractal Nesting</button>
-    </div>
-
-    <div id="learn-content"></div>
-  </div>
-</div>
-
-<!-- MODAL: Buy Shards -->
-<div id="buy-modal" class="modal-overlay hidden">
-  <div class="modal-box">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
-      <div style="display:flex; align-items:center; gap:10px;">
-        <img src="https://media.base44.com/images/public/6a1162569478f4ba8a2f44ea/4cdab7879_IMG_2497.jpeg" style="height:32px;" />
-        <h2 style="font-size:20px; font-weight:800; color:#f1f5f9;" id="buy-modal-title">Buy Shards</h2>
-      </div>
-      <button onclick="closeModal('buy-modal')" style="width:32px; height:32px; border-radius:8px; border:1px solid #1e3a5a; background:transparent; color:#94a3b8; cursor:pointer; font-size:18px;">×</button>
-    </div>
-    <div id="buy-modal-content"></div>
-  </div>
-</div>
-
-<!-- MODAL: Sell Shards -->
-<div id="sell-modal" class="modal-overlay hidden">
-  <div class="modal-box">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
-      <h2 style="font-size:20px; font-weight:800; color:#f1f5f9;">List Shards for Sale</h2>
-      <button onclick="closeModal('sell-modal')" style="width:32px; height:32px; border-radius:8px; border:1px solid #1e3a5a; background:transparent; color:#94a3b8; cursor:pointer; font-size:18px;">×</button>
-    </div>
-    <div id="sell-modal-content"></div>
-  </div>
-</div>
-
-<!-- MODAL: DeFi -->
-<div id="defi-modal" class="modal-overlay hidden">
-  <div class="modal-box">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
-      <h2 style="font-size:20px; font-weight:800; color:#f1f5f9;">⛓️ Manage Collateral</h2>
-      <button onclick="closeModal('defi-modal')" style="width:32px; height:32px; border-radius:8px; border:1px solid #1e3a5a; background:transparent; color:#94a3b8; cursor:pointer; font-size:18px;">×</button>
-    </div>
-    <div id="defi-modal-content"></div>
-  </div>
-</div>
-
-<!-- MODAL: Booking confirm -->
-<div id="booking-confirm-modal" class="modal-overlay hidden">
-  <div class="modal-box">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
-      <h2 style="font-size:20px; font-weight:800; color:#f1f5f9;">🏖️ Confirm Your Stay</h2>
-      <button onclick="closeModal('booking-confirm-modal')" style="width:32px; height:32px; border-radius:8px; border:1px solid #1e3a5a; background:transparent; color:#94a3b8; cursor:pointer; font-size:18px;">×</button>
-    </div>
-    <div id="booking-confirm-content"></div>
-  </div>
-</div>
-
-<script>
-// ======================= DATA =======================
-const SHARD_IMG = "https://media.base44.com/images/public/6a1162569478f4ba8a2f44ea/4cdab7879_IMG_2497.jpeg";
-
-const pools = [
-  {id:'coastal', name:'Coastal Escape Collection', type:'Vacation Rental', strategy:'Vacation/Lifestyle', status:'Active', is_vacation_eligible:true, description:'Premium beachfront vacation homes across Florida, California, and Hawaii. Priority booking windows for Shard holders.', location:'FL, CA, HI', total_value:4200000, total_shards:420000, shard_price:10, min_investment:10, target_apy:9.8, actual_apy:10.4, occupancy_rate:74, vacancy_rate:26, annual_vacant_nights:2847, properties_count:7, management_fee:1.2, distribution_frequency:'Weekly', next_distribution:'2026-05-30', nav_per_shard:10.82, total_distributed:218400, defi_collateral_enabled:true, chain:'Ethereum', highlights:['Priority 45-day booking','Avg $380/night','7 beachfront properties','Weekly distributions','DeFi collateral'], booking_rules:{max_consecutive_nights:14, annual_cap_nights_per_1pct:3.5, advance_booking_days:45, cleaning_fee:120}, emoji:'🏖️'},
-  {id:'alpine', name:'Alpine Summit Fund', type:'Vacation Rental', strategy:'Vacation/Lifestyle', status:'Active', is_vacation_eligible:true, description:'Mountain cabin and ski chalet portfolio in Colorado, Utah, and Vermont. Shard Nights redeemable during off-peak windows.', location:'CO, UT, VT', total_value:2800000, total_shards:280000, shard_price:10, min_investment:10, target_apy:8.5, actual_apy:8.9, occupancy_rate:68, vacancy_rate:32, annual_vacant_nights:3504, properties_count:5, management_fee:1.1, distribution_frequency:'Weekly', next_distribution:'2026-05-30', nav_per_shard:10.45, total_distributed:124600, defi_collateral_enabled:true, chain:'Polygon', highlights:['Ski-season priority access','5 mountain properties','Avg $290/night','30-day advance booking','Polygon (low fees)'], booking_rules:{max_consecutive_nights:10, annual_cap_nights_per_1pct:4.2, advance_booking_days:30, cleaning_fee:95}, emoji:'🏔️'},
-  {id:'urban', name:'Urban Core REIT Pool', type:'Real Estate', strategy:'Income', status:'Active', is_vacation_eligible:false, description:'Diversified commercial and residential real estate in NYC, Austin, and Chicago. 96% occupancy, stable monthly income.', location:'NYC, Austin, Chicago', total_value:12000000, total_shards:1200000, shard_price:10, min_investment:10, target_apy:7.2, actual_apy:7.6, occupancy_rate:96, vacancy_rate:4, annual_vacant_nights:0, properties_count:14, management_fee:0.85, distribution_frequency:'Monthly', next_distribution:'2026-06-01', nav_per_shard:11.2, total_distributed:912000, defi_collateral_enabled:true, chain:'Ethereum', highlights:['96% occupancy','14 properties, 3 cities','Stable monthly income','12% NAV appreciation','Aave collateral'], booking_rules:{}, emoji:'🏢'},
-  {id:'gold', name:'Gold & Precious Metals Vault', type:'Gold/Metals', strategy:'Growth', status:'Active', is_vacation_eligible:false, description:'Physical gold, silver, and platinum held in insured Swiss and Singapore vaults. Quarterly audits.', location:'Zurich, Singapore', total_value:6500000, total_shards:650000, shard_price:10, min_investment:50, target_apy:5.8, actual_apy:6.2, occupancy_rate:100, vacancy_rate:0, annual_vacant_nights:0, properties_count:0, management_fee:0.6, distribution_frequency:'Monthly', next_distribution:'2026-06-01', nav_per_shard:10.95, total_distributed:402000, defi_collateral_enabled:true, chain:'Ethereum', highlights:['Physical gold 99.9%','Swiss vaults, insured','Inflation hedge','Quarterly audits','DeFi collateral'], booking_rules:{}, emoji:'🥇'},
-  {id:'farmland', name:'Heartland Farmland Fund', type:'Farmland', strategy:'Balanced', status:'Active', is_vacation_eligible:false, description:'Productive agricultural land in Iowa, Nebraska, and Kansas. Long-term lease income plus land appreciation.', location:'Iowa, Nebraska, Kansas', total_value:8900000, total_shards:890000, shard_price:10, min_investment:10, target_apy:6.5, actual_apy:6.8, occupancy_rate:100, vacancy_rate:0, annual_vacant_nights:0, properties_count:22, management_fee:0.75, distribution_frequency:'Quarterly', next_distribution:'2026-07-01', nav_per_shard:10.68, total_distributed:603200, defi_collateral_enabled:false, chain:'Polygon', highlights:['22 farm parcels, 4,800 acres','Long-term leases','USDA-grade land','Low volatility','Income + appreciation'], booking_rules:{}, emoji:'🌾'},
-  {id:'meta', name:'ShardForge Meta-Pool', type:'Real Estate', strategy:'Balanced', status:'Active', is_vacation_eligible:true, description:'The flagship diversified meta-pool — fractally composed of all pools. One investment, all assets. Indirect Shard Night access via vacation pool weights.', location:'Global', total_value:34400000, total_shards:3440000, shard_price:10, min_investment:10, target_apy:7.8, actual_apy:8.1, occupancy_rate:88, vacancy_rate:12, annual_vacant_nights:840, properties_count:48, management_fee:1.0, distribution_frequency:'Weekly', next_distribution:'2026-05-30', nav_per_shard:10.92, total_distributed:2260200, defi_collateral_enabled:true, chain:'Ethereum', highlights:['All-in-one exposure','Fractal nesting','Indirect Shard Nights','48 assets, 5 categories','Weekly distributions'], booking_rules:{max_consecutive_nights:7, annual_cap_nights_per_1pct:1.2, advance_booking_days:30, cleaning_fee:110}, emoji:'✦', is_meta:true}
-];
-
-const holdings = [
-  {pool_id:'coastal', pool_name:'Coastal Escape Collection', shards_owned:2500, ownership_percent:0.595, invested_amount:25000, current_value:27050, total_earned:2880, shard_nights_annual:20, shard_nights_used:7, shard_nights_remaining:13, auto_reinvest:false, collateral_locked:0, effective_irr:14.2, usage_value_usd:2660},
-  {pool_id:'alpine', pool_name:'Alpine Summit Fund', shards_owned:1000, ownership_percent:0.357, invested_amount:10000, current_value:10450, total_earned:920, shard_nights_annual:14, shard_nights_used:3, shard_nights_remaining:11, auto_reinvest:true, collateral_locked:500, effective_irr:11.8, usage_value_usd:1218},
-  {pool_id:'urban', pool_name:'Urban Core REIT Pool', shards_owned:5000, ownership_percent:0.417, invested_amount:50000, current_value:56000, total_earned:4420, shard_nights_annual:0, shard_nights_used:0, shard_nights_remaining:0, auto_reinvest:true, collateral_locked:2000, effective_irr:12.6, usage_value_usd:0},
-  {pool_id:'gold', pool_name:'Gold & Precious Metals Vault', shards_owned:3000, ownership_percent:0.462, invested_amount:30000, current_value:32850, total_earned:1980, shard_nights_annual:0, shard_nights_used:0, shard_nights_remaining:0, auto_reinvest:false, collateral_locked:1000, effective_irr:9.4, usage_value_usd:0},
-  {pool_id:'meta', pool_name:'ShardForge Meta-Pool', shards_owned:800, ownership_percent:0.023, invested_amount:8000, current_value:8736, total_earned:612, shard_nights_annual:4, shard_nights_used:1, shard_nights_remaining:3, auto_reinvest:true, collateral_locked:0, effective_irr:13.1, usage_value_usd:380}
-];
-
-const bookings = [
-  {id:'b1', pool_id:'coastal', pool_name:'Coastal Escape Collection', property_name:'Malibu Crest Villa', user_email:'demo@shardforge.io', check_in:'2026-06-14', check_out:'2026-06-21', nights:7, status:'Confirmed', booking_type:'Member Stay', cleaning_fee:120, rental_income:0, notes:'Priority window booking. Ocean view suite.', confirmation_code:'SHD-CCM-4821'},
-  {id:'b2', pool_id:'alpine', pool_name:'Alpine Summit Fund', property_name:'Aspen Peak Lodge', user_email:'demo@shardforge.io', check_in:'2026-07-04', check_out:'2026-07-07', nights:3, status:'Pending', booking_type:'Member Stay', cleaning_fee:95, rental_income:0, notes:'Independence Day weekend.', confirmation_code:'SHD-ASF-9934'},
-  {id:'b3', pool_id:'coastal', pool_name:'Coastal Escape Collection', property_name:'Siesta Key Retreat', user_email:'public@airbnb.com', check_in:'2026-06-01', check_out:'2026-06-07', nights:6, status:'Completed', booking_type:'Public Rental', cleaning_fee:120, rental_income:2280, notes:'Airbnb — income distributed to Shard holders.', confirmation_code:'ABB-SKR-7741'},
-  {id:'b4', pool_id:'coastal', pool_name:'Coastal Escape Collection', property_name:'Miami Shores Penthouse', user_email:'public@vrbo.com', check_in:'2026-06-08', check_out:'2026-06-13', nights:5, status:'Confirmed', booking_type:'Public Rental', cleaning_fee:120, rental_income:2100, notes:'VRBO booking — income distributed.', confirmation_code:'VRB-MSP-3318'},
-  {id:'b5', pool_id:'coastal', pool_name:'Coastal Escape Collection', property_name:'Kauai Cliffside Bungalow', user_email:'', check_in:'2026-06-22', check_out:'2026-07-05', nights:13, status:'Confirmed', booking_type:'Blocked', cleaning_fee:0, rental_income:0, notes:'Renovation — blocked.', confirmation_code:'BLK-KCB-0012'}
-];
-
-const distributions = [
-  {pool_id:'coastal', pool_name:'Coastal Escape Collection', period:'Week of May 19, 2026', total_amount:18200, per_shard_amount:0.0433, source:'Rental Income', status:'Completed', distribution_date:'2026-05-23', occupancy_rate:74, member_usage_nights:12, public_rental_nights:54},
-  {pool_id:'alpine', pool_name:'Alpine Summit Fund', period:'Week of May 19, 2026', total_amount:9800, per_shard_amount:0.035, source:'Rental Income', status:'Completed', distribution_date:'2026-05-23', occupancy_rate:68, member_usage_nights:8, public_rental_nights:40},
-  {pool_id:'urban', pool_name:'Urban Core REIT Pool', period:'May 2026', total_amount:76800, per_shard_amount:0.064, source:'Rental Income', status:'Completed', distribution_date:'2026-05-01', occupancy_rate:96, member_usage_nights:0, public_rental_nights:0},
-  {pool_id:'gold', pool_name:'Gold & Precious Metals Vault', period:'May 2026', total_amount:33500, per_shard_amount:0.0515, source:'Appreciation', status:'Completed', distribution_date:'2026-05-01'},
-  {pool_id:'meta', pool_name:'ShardForge Meta-Pool', period:'Week of May 19, 2026', total_amount:144800, per_shard_amount:0.0421, source:'Mixed', status:'Completed', distribution_date:'2026-05-23'},
-  {pool_id:'coastal', pool_name:'Coastal Escape Collection', period:'Week of May 26, 2026', total_amount:19400, per_shard_amount:0.0462, source:'Rental Income', status:'Scheduled', distribution_date:'2026-05-30'}
-];
-
-const marketListings = [
-  {id:'m1', pool_id:'coastal', pool_name:'Coastal Escape Collection', seller_email:'seller1@shardforge.io', shards_for_sale:500, ask_price_per_shard:11.2, nav_per_shard:10.82, premium_discount_pct:3.51, includes_usage_rights:true, shard_nights_included:3, status:'Active', expires_at:'2026-06-15', total_ask:5600},
-  {id:'m2', pool_id:'alpine', pool_name:'Alpine Summit Fund', seller_email:'seller2@shardforge.io', shards_for_sale:250, ask_price_per_shard:10.5, nav_per_shard:10.45, premium_discount_pct:0.48, includes_usage_rights:true, shard_nights_included:1, status:'Active', expires_at:'2026-06-20', total_ask:2625},
-  {id:'m3', pool_id:'urban', pool_name:'Urban Core REIT Pool', seller_email:'seller3@shardforge.io', shards_for_sale:1000, ask_price_per_shard:10.8, nav_per_shard:11.2, premium_discount_pct:-3.57, includes_usage_rights:false, shard_nights_included:0, status:'Active', expires_at:'2026-06-30', total_ask:10800},
-  {id:'m4', pool_id:'gold', pool_name:'Gold & Precious Metals Vault', seller_email:'seller4@shardforge.io', shards_for_sale:2000, ask_price_per_shard:11.1, nav_per_shard:10.95, premium_discount_pct:1.37, includes_usage_rights:false, shard_nights_included:0, status:'Active', expires_at:'2026-07-01', total_ask:22200}
-];
-
-const properties = [
-  {id:'p1', pool_id:'coastal', name:'Malibu Crest Villa', location:'Malibu, CA', nightly_rate:420, capacity:8, img:'🏠'},
-  {id:'p2', pool_id:'coastal', name:'Siesta Key Retreat', location:'Siesta Key, FL', nightly_rate:340, capacity:6, img:'🏡'},
-  {id:'p3', pool_id:'coastal', name:'Miami Shores Penthouse', location:'Miami Beach, FL', nightly_rate:480, capacity:4, img:'🏙️'},
-  {id:'p4', pool_id:'coastal', name:'Kauai Cliffside Bungalow', location:'Kauai, HI', nightly_rate:520, capacity:4, img:'🌴'},
-  {id:'p5', pool_id:'alpine', name:'Aspen Peak Lodge', location:'Aspen, CO', nightly_rate:380, capacity:10, img:'🏔️'},
-  {id:'p6', pool_id:'alpine', name:'Vail Summit Cabin', location:'Vail, CO', nightly_rate:290, capacity:6, img:'⛷️'},
-];
-
-// ======================= STATE =======================
-let currentPage = 'dashboard';
-let calendarYear = 2026;
-let calendarMonth = 5; // June (0-indexed)
-let selectedProperty = null;
-let bookingStart = null;
-let bookingEnd = null;
-let irrChart = null;
-let poolFilter = 'all';
-
-// ======================= PARTICLES =======================
-function initParticles() {
-  const container = document.getElementById('particles');
-  for (let i = 0; i < 20; i++) {
-    const p = document.createElement('div');
-    p.className = 'particle';
-    p.style.cssText = `left:${Math.random()*100}%; top:${Math.random()*100}%; animation-duration:${8+Math.random()*12}s; animation-delay:-${Math.random()*10}s; width:${1+Math.random()*2}px; height:${1+Math.random()*2}px; opacity:${0.2+Math.random()*0.4};`;
-    container.appendChild(p);
-  }
-}
-
-// ======================= NAVIGATION =======================
-function showPage(page) {
-  currentPage = page;
-  ['dashboard','pools','booking','marketplace','defi','learn'].forEach(p => {
-    document.getElementById('page-'+p).classList.add('hidden');
-    document.getElementById('nav-'+p)?.classList.remove('active');
-  });
-  document.getElementById('page-'+page).classList.remove('hidden');
-  document.getElementById('nav-'+page)?.classList.add('active');
-  document.getElementById('page-'+page).classList.add('fade-in');
-  renderPage(page);
-  window.scrollTo(0, 0);
-}
-
-function renderPage(page) {
-  switch(page) {
-    case 'dashboard': renderDashboard(); break;
-    case 'pools': renderPools(); break;
-    case 'booking': renderBooking(); break;
-    case 'marketplace': renderMarketplace(); break;
-    case 'defi': renderDeFi(); break;
-    case 'learn': renderLearn('basics'); break;
-  }
-}
-
-// ======================= DASHBOARD =======================
-function renderDashboard() {
-  renderHoldingsList();
-  renderUpcomingBookings();
-  renderRecentDistributions();
-  setTimeout(renderIRRChart, 100);
-}
-
-function renderHoldingsList() {
-  const el = document.getElementById('holdings-list');
-  el.innerHTML = holdings.map(h => {
-    const pool = pools.find(p => p.id === h.pool_id);
-    const pnl = h.current_value - h.invested_amount;
-    const pnlPct = (pnl / h.invested_amount * 100).toFixed(1);
-    return `
-    <div style="display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid #1e3a5a;">
-      <div style="font-size:22px; width:36px; text-align:center;">${pool?.emoji || '💎'}</div>
-      <div style="flex:1; min-width:0;">
-        <div style="font-size:13px; font-weight:600; color:#f1f5f9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${h.pool_name}</div>
-        <div style="font-size:11px; color:#64748b;">${h.shards_owned.toLocaleString()} Shards · ${h.ownership_percent.toFixed(3)}%</div>
-        ${h.shard_nights_remaining > 0 ? '<div class="shard-night-badge" style="margin-top:4px; padding:2px 8px; display:inline-flex;"><img src="' + SHARD_IMG + '" style="height:12px;"/><span style="font-size:10px; color:#38bdf8;">' + h.shard_nights_remaining + ' nights left</span></div>' : ''}
-      </div>
-      <div style="text-align:right;">
-        <div style="font-size:14px; font-weight:700; color:#f1f5f9;">$${h.current_value.toLocaleString()}</div>
-        <div style="font-size:11px; color:${pnl >= 0 ? '#22c55e' : '#ef4444'};">${pnl >= 0 ? '+' : ''}$${pnl.toFixed(0)} (${pnlPct}%)</div>
-        <div style="font-size:10px; color:#38bdf8;">IRR ${h.effective_irr}%</div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function renderIRRChart() {
-  const ctx = document.getElementById('irrChart');
-  if (!ctx) return;
-  if (irrChart) { irrChart.destroy(); }
-  irrChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: holdings.map(h => h.pool_name.split(' ').slice(0,2).join(' ')),
-      datasets: [
-        {label: 'Rental Income', data: [7.2,5.8,7.6,4.5,5.2], backgroundColor: 'rgba(34,197,94,0.7)', borderRadius: 4, stack: 'a'},
-        {label: 'Appreciation', data: [2.8,1.9,3.2,3.1,2.4], backgroundColor: 'rgba(56,189,248,0.7)', borderRadius: 4, stack: 'a'},
-        {label: 'Shard Nights', data: [4.2,4.1,1.5,1.8,5.5], backgroundColor: 'rgba(168,85,247,0.7)', borderRadius: 4, stack: 'a'}
-      ]
-    },
-    options: {
-      responsive: true, plugins: {legend: {labels: {color:'#94a3b8', font:{size:11}}}},
-      scales: {
-        x: {ticks: {color:'#64748b', font:{size:10}}, grid: {color:'#1e3a5a'}, stacked: true},
-        y: {ticks: {color:'#64748b', callback: v => v+'%'}, grid: {color:'#1e3a5a'}, stacked: true}
-      }
-    }
-  });
-}
-
-function renderUpcomingBookings() {
-  const el = document.getElementById('upcoming-bookings');
-  const myBookings = bookings.filter(b => b.user_email === 'demo@shardforge.io' && b.status !== 'Completed');
-  if (!myBookings.length) { el.innerHTML = '<div style="text-align:center; color:#64748b; padding:20px;">No upcoming bookings. Book a stay with your Shard Nights!</div>'; return; }
-  el.innerHTML = myBookings.map(b => `
-  <div style="background:rgba(56,189,248,0.07); border:1px solid rgba(56,189,248,0.2); border-radius:12px; padding:16px; margin-bottom:12px;">
-    <div style="display:flex; justify-content:space-between; align-items:start;">
-      <div>
-        <div style="font-size:14px; font-weight:700; color:#f1f5f9;">🏠 ${b.property_name}</div>
-        <div style="font-size:12px; color:#64748b; margin-top:4px;">${b.pool_name}</div>
-        <div style="font-size:12px; color:#38bdf8; margin-top:6px;">📅 ${b.check_in} → ${b.check_out} · ${b.nights} nights</div>
-        <div style="font-size:11px; color:#64748b; margin-top:4px;">Confirmation: ${b.confirmation_code}</div>
-      </div>
-      <span class="badge ${b.status === 'Confirmed' ? 'badge-active' : 'badge-funding'}">${b.status}</span>
-    </div>
-    ${b.cleaning_fee ? `<div style="margin-top:8px; padding-top:8px; border-top:1px solid rgba(56,189,248,0.1); font-size:12px; color:#64748b;">Cleaning fee only: <strong style="color:#f1f5f9;">$${b.cleaning_fee}</strong> · No rental rate charged to members</div>` : ''}
-  </div>`).join('');
-}
-
-function renderRecentDistributions() {
-  const el = document.getElementById('recent-distributions');
-  el.innerHTML = distributions.slice(0,5).map(d => {
-    const h = holdings.find(h2 => h2.pool_id === d.pool_id);
-    const myShare = h ? (h.shards_owned * d.per_shard_amount) : 0;
-    return `
-    <div style="display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid #1e3a5a;">
-      <div style="width:8px; height:8px; border-radius:50%; background:${d.status==='Completed'?'#22c55e':d.status==='Scheduled'?'#fbbf24':'#64748b'};"></div>
-      <div style="flex:1;">
-        <div style="font-size:13px; font-weight:600; color:#f1f5f9;">${d.pool_name.split(' ').slice(0,2).join(' ')}</div>
-        <div style="font-size:11px; color:#64748b;">${d.period} · ${d.source}</div>
-      </div>
-      <div style="text-align:right;">
-        ${myShare > 0 ? `<div style="font-size:13px; font-weight:700; color:#22c55e;">+$${myShare.toFixed(2)}</div>` : ''}
-        <div style="font-size:11px; color:#64748b;">$${d.per_shard_amount.toFixed(4)}/shard</div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-// ======================= POOLS =======================
-function filterPools(type) {
-  poolFilter = type;
-  document.querySelectorAll('[id^="filter-"]').forEach(b => b.classList.remove('active'));
-  document.getElementById('filter-'+type)?.classList.add('active');
-  renderPools();
-}
-
-function renderPools() {
-  const grid = document.getElementById('pools-grid');
-  let filtered = pools;
-  if (poolFilter === 'vacation') filtered = pools.filter(p => p.is_vacation_eligible);
-  else if (poolFilter === 'realestate') filtered = pools.filter(p => p.type === 'Real Estate');
-  else if (poolFilter === 'metals') filtered = pools.filter(p => p.type === 'Gold/Metals');
-  else if (poolFilter === 'farmland') filtered = pools.filter(p => p.type === 'Farmland');
-
-  grid.innerHTML = filtered.map(pool => renderPoolCard(pool)).join('');
-}
-
-function renderPoolCard(pool) {
-  const holding = holdings.find(h => h.pool_id === pool.id);
-  const gainPct = ((pool.nav_per_shard - pool.shard_price) / pool.shard_price * 100).toFixed(1);
-  return `
-  <div class="shard-card" style="padding:0; overflow:hidden; cursor:pointer;" onclick="openPoolDetail('${pool.id}')">
-    <div style="padding:20px; background: linear-gradient(135deg, rgba(56,189,248,0.05), rgba(14,165,233,0.02)); border-bottom:1px solid #1e3a5a;">
-      <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:12px;">
-        <div style="display:flex; align-items:center; gap:10px;">
-          <div style="font-size:28px;">${pool.emoji}</div>
-          <div>
-            <div style="font-size:15px; font-weight:700; color:#f1f5f9;">${pool.name}</div>
-            <div style="font-size:11px; color:#64748b;">📍 ${pool.location}</div>
-          </div>
-        </div>
-        <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-end;">
-          <span class="badge badge-active">${pool.status}</span>
-          ${pool.is_vacation_eligible ? `<span class="badge badge-vacation">🏖️ Shard Nights</span>` : ''}
-          ${pool.is_meta ? `<span class="badge" style="background:rgba(251,191,36,0.15);color:#fbbf24;border:1px solid rgba(251,191,36,0.3);">✦ Meta-Pool</span>` : ''}
-        </div>
-      </div>
-      <p style="font-size:12px; color:#64748b; line-height:1.5; margin-bottom:12px;">${pool.description}</p>
-      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
-        <div style="text-align:center; background:rgba(34,197,94,0.08); border-radius:8px; padding:8px;">
-          <div style="font-size:16px; font-weight:800; color:#22c55e;">${pool.actual_apy}%</div>
-          <div style="font-size:10px; color:#64748b;">APY</div>
-        </div>
-        <div style="text-align:center; background:rgba(56,189,248,0.08); border-radius:8px; padding:8px;">
-          <div style="font-size:16px; font-weight:800; color:#38bdf8;">$${pool.nav_per_shard.toFixed(2)}</div>
-          <div style="font-size:10px; color:#64748b;">NAV/Shard</div>
-        </div>
-        <div style="text-align:center; background:rgba(168,85,247,0.08); border-radius:8px; padding:8px;">
-          <div style="font-size:16px; font-weight:800; color:#a855f7;">${pool.distribution_frequency}</div>
-          <div style="font-size:10px; color:#64748b;">Payouts</div>
-        </div>
-      </div>
-    </div>
-    <div style="padding:16px 20px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-        <span style="font-size:12px; color:#64748b;">Pool Size</span>
-        <span style="font-size:12px; font-weight:600; color:#f1f5f9;">$${(pool.total_value/1000000).toFixed(1)}M</span>
-      </div>
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-        <span style="font-size:12px; color:#64748b;">Min. Investment</span>
-        <span style="font-size:12px; font-weight:600; color:#38bdf8;">$${pool.min_investment}</span>
-      </div>
-      ${pool.is_vacation_eligible ? `
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-        <span style="font-size:12px; color:#64748b;">Vacant Nights/yr</span>
-        <span style="font-size:12px; font-weight:600; color:#38bdf8;">${pool.annual_vacant_nights?.toLocaleString()} available</span>
-      </div>` : ''}
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <span style="font-size:12px; color:#64748b;">Chain</span>
-        <span class="chain-badge ${pool.chain==='Polygon'?'chain-poly':'chain-eth'}">${pool.chain === 'Ethereum' ? 'Ξ ETH' : '◆ MATIC'}</span>
-      </div>
-      ${pool.highlights ? `<div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:12px;">${pool.highlights.slice(0,3).map(h => `<span style="font-size:10px; background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.15); border-radius:4px; padding:2px 6px; color:#94a3b8;">✓ ${h}</span>`).join('')}</div>` : ''}
-      <div style="display:flex; gap:8px;">
-        ${holding ? `
-        <div style="flex:1; background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.2); border-radius:8px; padding:8px; text-align:center;">
-          <div style="font-size:11px; color:#64748b;">Your Shards</div>
-          <div style="font-size:14px; font-weight:700; color:#38bdf8;">${holding.shards_owned.toLocaleString()}</div>
-        </div>` : ''}
-        <button class="glow-btn" style="flex:1; font-size:13px;" onclick="event.stopPropagation(); openBuyModal('${pool.id}')">
-          ${holding ? 'Buy More' : 'Invest Now'}
-        </button>
-      </div>
-    </div>
-  </div>`;
-}
-
-function openPoolDetail(poolId) {
-  // For demo — open buy modal with pool detail view
-  openBuyModal(poolId, true);
-}
-
-// ======================= BUY MODAL =======================
-function openBuyModal(poolId, detail = false) {
-  const pool = pools.find(p => p.id === poolId);
-  const holding = holdings.find(h => h.pool_id === poolId);
-  document.getElementById('buy-modal-title').textContent = `Buy Shards — ${pool.name}`;
-
-  let nightsInfo = '';
-  if (pool.is_vacation_eligible && pool.booking_rules?.annual_cap_nights_per_1pct) {
-    nightsInfo = `
-    <div style="background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.2); border-radius:12px; padding:16px; margin-bottom:20px;">
-      <div style="font-size:13px; font-weight:700; color:#38bdf8; margin-bottom:8px;">🏖️ Shard Nights Calculator</div>
-      <div style="font-size:12px; color:#94a3b8; margin-bottom:8px;">Enter your investment to see your annual Shard Night allocation:</div>
-      <input type="number" id="nights-calc" class="input-field" placeholder="Investment amount ($)" oninput="calcNights('${poolId}')" style="margin-bottom:8px;" />
-      <div id="nights-result" style="font-size:13px; color:#38bdf8;"></div>
-    </div>`;
-  }
-
-  document.getElementById('buy-modal-content').innerHTML = `
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
-      <div style="background:rgba(34,197,94,0.07); border-radius:10px; padding:12px; text-align:center;">
-        <div style="font-size:22px; font-weight:800; color:#22c55e;">${pool.actual_apy}%</div>
-        <div style="font-size:11px; color:#64748b;">Actual APY</div>
-      </div>
-      <div style="background:rgba(56,189,248,0.07); border-radius:10px; padding:12px; text-align:center;">
-        <div style="font-size:22px; font-weight:800; color:#38bdf8;">$${pool.nav_per_shard.toFixed(2)}</div>
-        <div style="font-size:11px; color:#64748b;">NAV per Shard</div>
-      </div>
-    </div>
-    ${nightsInfo}
-    <label style="font-size:12px; color:#94a3b8; display:block; margin-bottom:6px;">Investment Amount (USD)</label>
-    <input type="number" id="invest-amount" class="input-field" placeholder="Min $${pool.min_investment}" min="${pool.min_investment}" value="${pool.min_investment * 10}" oninput="updateBuyPreview('${poolId}')" style="margin-bottom:16px;" />
-    <div id="buy-preview" style="background:rgba(56,189,248,0.05); border:1px solid #1e3a5a; border-radius:10px; padding:16px; margin-bottom:20px; font-size:13px;"></div>
-    <div style="display:flex; align-items:center; gap:8px; margin-bottom:20px;">
-      <input type="checkbox" id="auto-reinvest" style="accent-color:#38bdf8;" ${holding?.auto_reinvest ? 'checked' : ''} />
-      <label for="auto-reinvest" style="font-size:13px; color:#94a3b8; cursor:pointer;">Auto-reinvest distributions</label>
-    </div>
-    <button class="glow-btn" style="width:100%;" onclick="confirmBuy('${poolId}')">Confirm Purchase ✦</button>`;
-
-  updateBuyPreview(poolId);
-  document.getElementById('buy-modal').classList.remove('hidden');
-}
-
-function calcNights(poolId) {
-  const pool = pools.find(p => p.id === poolId);
-  const amt = parseFloat(document.getElementById('nights-calc')?.value) || 0;
-  const shards = amt / pool.nav_per_shard;
-  const pct = shards / pool.total_shards * 100;
-  const nights = pct * pool.booking_rules.annual_cap_nights_per_1pct;
-  const el = document.getElementById('nights-result');
-  if (el && amt > 0) {
-    el.innerHTML = `$${amt.toLocaleString()} → <strong style="color:#f1f5f9;">${Math.round(shards).toLocaleString()} Shards</strong> (${pct.toFixed(3)}%) → <strong style="color:#38bdf8;">~${nights.toFixed(1)} Shard Nights/year</strong>`;
-  }
-}
-
-function updateBuyPreview(poolId) {
-  const pool = pools.find(p => p.id === poolId);
-  const amt = parseFloat(document.getElementById('invest-amount')?.value) || 0;
-  const shards = Math.floor(amt / pool.nav_per_shard);
-  const pct = shards / pool.total_shards * 100;
-  const annualIncome = amt * (pool.actual_apy / 100);
-  const nights = pool.is_vacation_eligible && pool.booking_rules?.annual_cap_nights_per_1pct
-    ? (pct * pool.booking_rules.annual_cap_nights_per_1pct) : 0;
-  const usageVal = nights * (pool.booking_rules?.cleaning_fee ? 350 : 0);
-  const el = document.getElementById('buy-preview');
-  if (!el) return;
-  el.innerHTML = `
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-      <div><div style="color:#64748b; font-size:11px;">Shards</div><div style="color:#f1f5f9; font-weight:700;">${shards.toLocaleString()}</div></div>
-      <div><div style="color:#64748b; font-size:11px;">Ownership</div><div style="color:#f1f5f9; font-weight:700;">${pct.toFixed(4)}%</div></div>
-      <div><div style="color:#64748b; font-size:11px;">Est. Annual Income</div><div style="color:#22c55e; font-weight:700;">$${annualIncome.toFixed(2)}</div></div>
-      ${nights > 0 ? `<div><div style="color:#64748b; font-size:11px;">Shard Nights/yr</div><div style="color:#38bdf8; font-weight:700;">~${nights.toFixed(1)} nights</div></div>` : ''}
-    </div>`;
-}
-
-function confirmBuy(poolId) {
-  const pool = pools.find(p => p.id === poolId);
-  const amt = parseFloat(document.getElementById('invest-amount')?.value) || 0;
-  if (amt < pool.min_investment) {
-    alert(`Minimum investment is $${pool.min_investment}`);
-    return;
-  }
-  closeModal('buy-modal');
-  showSuccessToast(`✦ Purchase confirmed! ${Math.floor(amt / pool.nav_per_shard).toLocaleString()} Shards in ${pool.name}`);
-}
-
-// ======================= BOOKING / CALENDAR =======================
-function renderBooking() {
-  renderNightsSummary();
-  renderPropertyList();
-  renderMyBookings();
-  if (selectedProperty) renderCalendar();
-  else {
-    document.getElementById('cal-property-name').textContent = 'Select a property to view calendar';
-    document.getElementById('calendar-grid').innerHTML = `<div style="text-align:center; color:#64748b; padding:40px;">Select a property from the left to view availability</div>`;
-  }
-}
-
-function renderNightsSummary() {
-  const el = document.getElementById('nights-summary');
-  const vacationHoldings = holdings.filter(h => {
-    const pool = pools.find(p => p.id === h.pool_id);
-    return pool?.is_vacation_eligible && h.shard_nights_remaining > 0;
-  });
-  const totalRemaining = vacationHoldings.reduce((a, h) => a + h.shard_nights_remaining, 0);
-  el.innerHTML = `
-  <div class="stat-card">
-    <div style="font-size:11px; color:#64748b; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Total Shard Nights</div>
-    <div style="font-size:32px; font-weight:800; color:#38bdf8;">${totalRemaining}</div>
-    <div style="font-size:12px; color:#64748b;">remaining this year</div>
-  </div>` +
-  vacationHoldings.map(h => `
-  <div class="stat-card" style="cursor:pointer;" onclick="filterPropertiesByPool('${h.pool_id}')">
-    <div style="font-size:11px; color:#64748b; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">${h.pool_name.split(' ').slice(0,2).join(' ')}</div>
-    <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
-      <img src="${SHARD_IMG}" style="height:20px;" />
-      <div style="font-size:26px; font-weight:800; color:#38bdf8;">${h.shard_nights_remaining}</div>
-    </div>
-    <div style="font-size:11px; color:#64748b;">${h.shard_nights_used} used · ${h.shard_nights_annual} total</div>
-    <div class="progress-bar" style="margin-top:8px;">
-      <div class="progress-fill" style="width:${(h.shard_nights_used/h.shard_nights_annual*100).toFixed(0)}%;"></div>
-    </div>
-  </div>`).join('');
-}
-
-function filterPropertiesByPool(poolId) {
-  // Scroll to property list and highlight properties from this pool
-  const propCards = document.querySelectorAll('#property-list > div');
-  propCards.forEach(card => {
-    card.style.opacity = '1';
-    card.style.transform = 'none';
-  });
-  // Re-render property list with pool filter applied via selectProperty auto-highlight
-  const firstPropInPool = properties.find(p => p.pool_id === poolId);
-  if (firstPropInPool && !selectedProperty) {
-    selectProperty(firstPropInPool.id);
-  }
-  document.getElementById('property-list')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-
-function renderPropertyList() {
-  const el = document.getElementById('property-list');
-  const eligible = properties.filter(p => {
-    const h = holdings.find(h2 => h2.pool_id === p.pool_id);
-    return h && h.shard_nights_remaining > 0;
-  });
-
-  el.innerHTML = eligible.map(p => {
-    const h = holdings.find(h2 => h2.pool_id === p.pool_id);
-    return `
-    <div onclick="selectProperty('${p.id}')" style="padding:14px; border-radius:12px; margin-bottom:8px; cursor:pointer; border:1px solid ${selectedProperty?.id===p.id?'#38bdf8':'#1e3a5a'}; background:${selectedProperty?.id===p.id?'rgba(56,189,248,0.1)':'transparent'}; transition:all 0.2s;">
-      <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
-        <div style="font-size:22px;">${p.img}</div>
-        <div>
-          <div style="font-size:13px; font-weight:600; color:#f1f5f9;">${p.name}</div>
-          <div style="font-size:11px; color:#64748b;">📍 ${p.location}</div>
-        </div>
-      </div>
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span style="font-size:11px; color:#38bdf8;">$${p.nightly_rate}/night public rate</span>
-        <span style="font-size:10px; background:rgba(34,197,94,0.15); color:#22c55e; padding:2px 8px; border-radius:10px;">${h?.shard_nights_remaining} nights available</span>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function selectProperty(propId) {
-  selectedProperty = properties.find(p => p.id === propId);
-  bookingStart = null;
-  bookingEnd = null;
-  renderPropertyList();
-  document.getElementById('cal-property-name').textContent = selectedProperty.name + ' — ' + selectedProperty.location;
-  renderCalendar();
-  updateBookingFormArea();
-}
-
-function prevMonth() {
-  calendarMonth--;
-  if (calendarMonth < 0) { calendarMonth = 11; calendarYear--; }
-  renderCalendar();
-}
-function nextMonth() {
-  calendarMonth++;
-  if (calendarMonth > 11) { calendarMonth = 0; calendarYear++; }
-  renderCalendar();
-}
-
-function renderCalendar() {
-  const el = document.getElementById('calendar-grid');
-  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  document.getElementById('cal-month-label').textContent = monthNames[calendarMonth] + ' ' + calendarYear;
-
-  const firstDay = new Date(calendarYear, calendarMonth, 1).getDay();
-  const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
-  const today = new Date();
-
-  // Build occupancy map from bookings
-  const occupancy = {};
-  if (selectedProperty) {
-    bookings.filter(b => b.pool_id === selectedProperty.pool_id).forEach(b => {
-      const start = new Date(b.check_in);
-      const end = new Date(b.check_out);
-      for (let d = new Date(start); d < end; d.setDate(d.getDate()+1)) {
-        const key = d.toISOString().split('T')[0];
-        occupancy[key] = b.booking_type;
-      }
-    });
-  }
-
-  let html = `<div style="display:grid; grid-template-columns:repeat(7,1fr); gap:4px; text-align:center; margin-bottom:8px;">`;
-  ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => {
-    html += `<div style="font-size:11px; color:#64748b; padding:4px 0;">${d}</div>`;
-  });
-  html += '</div><div style="display:grid; grid-template-columns:repeat(7,1fr); gap:4px;">';
-
-  for (let i = 0; i < firstDay; i++) html += '<div></div>';
-  for (let d = 1; d <= daysInMonth; d++) {
-    const dateStr = `${calendarYear}-${String(calendarMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const isToday = today.getFullYear()===calendarYear && today.getMonth()===calendarMonth && today.getDate()===d;
-    const occ = occupancy[dateStr];
-    const isStart = bookingStart && bookingStart === dateStr;
-    const isEnd = bookingEnd && bookingEnd === dateStr;
-    const inRange = bookingStart && bookingEnd && dateStr > bookingStart && dateStr < bookingEnd;
-    const isPast = new Date(dateStr) < today;
-
-    let cls = 'calendar-day';
-    let title = '';
-    if (isPast) { cls += ''; title = ''; }
-    else if (isStart || isEnd) cls += ' selected';
-    else if (inRange) cls += ' range';
-    else if (occ === 'Member Stay') cls += ' booked-member';
-    else if (occ === 'Public Rental') cls += ' booked-public';
-    else if (occ === 'Blocked') cls += ' blocked';
-    else cls += ' available';
-    if (isToday) cls += ' today';
-
-    const opacity = isPast ? '0.3' : '1';
-    html += `<div class="${cls}" style="opacity:${opacity}; font-size:13px;" onclick="${!isPast && !occ ? `selectDate('${dateStr}')` : ''}" title="${occ || (isPast ? 'Past' : 'Available')}">${d}</div>`;
-  }
-  html += '</div>';
-  el.innerHTML = html;
-}
-
-function selectDate(dateStr) {
-  if (!bookingStart || (bookingStart && bookingEnd)) {
-    bookingStart = dateStr;
-    bookingEnd = null;
-  } else if (dateStr > bookingStart) {
-    bookingEnd = dateStr;
-  } else {
-    bookingStart = dateStr;
-    bookingEnd = null;
-  }
-  renderCalendar();
-  updateBookingFormArea();
-}
-
-function updateBookingFormArea() {
-  const el = document.getElementById('booking-form-area');
-  if (!selectedProperty) {
-    el.innerHTML = '<div style="color:#64748b; font-size:13px; text-align:center;">Select a property first</div>';
-    return;
-  }
-  if (!bookingStart) {
-    el.innerHTML = '<div style="color:#64748b; font-size:13px; text-align:center;">Click an available date to start booking</div>';
-    return;
-  }
-  if (!bookingEnd) {
-    el.innerHTML = `<div style="color:#38bdf8; font-size:13px; text-align:center;">Check-in: <strong>${bookingStart}</strong> — now select your check-out date</div>`;
-    return;
-  }
-  const nights = Math.round((new Date(bookingEnd) - new Date(bookingStart)) / 86400000);
-  const h = holdings.find(h2 => h2.pool_id === selectedProperty.pool_id);
-  const pool = pools.find(p => p.id === selectedProperty.pool_id);
-  const cleaningFee = pool?.booking_rules?.cleaning_fee || 100;
-  const maxNights = pool?.booking_rules?.max_consecutive_nights || 14;
-  const publicRate = selectedProperty.nightly_rate * nights;
-
-  if (nights > maxNights) {
-    el.innerHTML = `<div style="color:#ef4444; font-size:13px; text-align:center;">Maximum ${maxNights} consecutive nights for this pool. Please select a shorter stay.</div>`;
-    return;
-  }
-  if (nights > (h?.shard_nights_remaining || 0)) {
-    el.innerHTML = `<div style="color:#ef4444; font-size:13px; text-align:center;">You only have ${h?.shard_nights_remaining} Shard Nights remaining. Select fewer nights.</div>`;
-    return;
-  }
-
-  el.innerHTML = `
-  <div style="background:rgba(56,189,248,0.07); border:1px solid rgba(56,189,248,0.2); border-radius:12px; padding:16px;">
-    <div style="font-size:14px; font-weight:700; color:#f1f5f9; margin-bottom:12px;">📋 Booking Summary</div>
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:13px; margin-bottom:12px;">
-      <div><span style="color:#64748b;">Property:</span> <strong style="color:#f1f5f9;">${selectedProperty.name}</strong></div>
-      <div><span style="color:#64748b;">Nights:</span> <strong style="color:#38bdf8;">${nights}</strong></div>
-      <div><span style="color:#64748b;">Check-in:</span> <strong style="color:#f1f5f9;">${bookingStart}</strong></div>
-      <div><span style="color:#64748b;">Check-out:</span> <strong style="color:#f1f5f9;">${bookingEnd}</strong></div>
-      <div><span style="color:#64748b;">Public rate:</span> <span style="color:#94a3b8; text-decoration:line-through;">$${publicRate.toLocaleString()}</span></div>
-      <div><span style="color:#64748b;">You pay:</span> <strong style="color:#22c55e;">$${cleaningFee} cleaning only</strong></div>
-    </div>
-    <div style="font-size:12px; color:#64748b; margin-bottom:12px;">Shard Nights used: ${nights} of ${h?.shard_nights_remaining} remaining</div>
-    <button class="glow-btn" style="width:100%;" onclick="openBookingConfirmModal()">Request Stay →</button>
-  </div>`;
-}
-
-function openBookingConfirmModal() {
-  if (!selectedProperty || !bookingStart || !bookingEnd) return;
-  const nights = Math.round((new Date(bookingEnd) - new Date(bookingStart)) / 86400000);
-  const pool = pools.find(p => p.id === selectedProperty.pool_id);
-  const cleaningFee = pool?.booking_rules?.cleaning_fee || 100;
-  const confCode = 'SHD-' + selectedProperty.pool_id.toUpperCase().slice(0,3) + '-' + Math.floor(1000+Math.random()*9000);
-
-  document.getElementById('booking-confirm-content').innerHTML = `
-  <div style="text-align:center; margin-bottom:24px;">
-    <img src="${SHARD_IMG}" style="height:64px;" class="crystal-img" />
-    <div style="font-size:16px; font-weight:700; color:#38bdf8; margin-top:12px;">Your Shard Night Booking</div>
-  </div>
-  <div style="background:rgba(56,189,248,0.07); border:1px solid rgba(56,189,248,0.2); border-radius:12px; padding:20px; margin-bottom:20px;">
-    <div style="font-size:16px; font-weight:700; color:#f1f5f9; margin-bottom:4px;">${selectedProperty.name}</div>
-    <div style="font-size:13px; color:#64748b; margin-bottom:16px;">📍 ${selectedProperty.location} · ${selectedProperty.img}</div>
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; font-size:13px;">
-      <div><span style="color:#64748b;">Check-in:</span><br/><strong style="color:#f1f5f9;">${bookingStart}</strong></div>
-      <div><span style="color:#64748b;">Check-out:</span><br/><strong style="color:#f1f5f9;">${bookingEnd}</strong></div>
-      <div><span style="color:#64748b;">Duration:</span><br/><strong style="color:#38bdf8;">${nights} nights</strong></div>
-      <div><span style="color:#64748b;">Total Due:</span><br/><strong style="color:#22c55e;">$${cleaningFee} (cleaning fee)</strong></div>
-    </div>
-  </div>
-  <div style="font-size:12px; color:#64748b; background:rgba(255,255,255,0.03); border-radius:8px; padding:12px; margin-bottom:20px;">
-    Your nightly rental value savings: <strong style="color:#f1f5f9;">$${(selectedProperty.nightly_rate * nights).toLocaleString()}</strong> — counted toward your effective IRR.
-  </div>
-  <button class="glow-btn" style="width:100%; margin-bottom:10px;" onclick="finalizeBooking('${confCode}')">Confirm Booking ✦</button>
-  <button onclick="closeModal('booking-confirm-modal')" style="width:100%; padding:12px; border-radius:12px; border:1px solid #1e3a5a; background:transparent; color:#64748b; cursor:pointer;">Cancel</button>`;
-
-  document.getElementById('booking-confirm-modal').classList.remove('hidden');
-}
-
-function finalizeBooking(confCode) {
-  closeModal('booking-confirm-modal');
-  showSuccessToast(`✦ Booking confirmed! ${confCode} — Check-in ${bookingStart}`);
-  bookingStart = null;
-  bookingEnd = null;
-  renderCalendar();
-  updateBookingFormArea();
-  renderMyBookings();
-}
-
-function renderMyBookings() {
-  const el = document.getElementById('my-bookings-list');
-  const myBookings = bookings.filter(b => b.user_email === 'demo@shardforge.io');
-  el.innerHTML = `<div style="overflow-x:auto;"><table style="width:100%; border-collapse:collapse; font-size:13px;">
-    <thead><tr style="border-bottom:1px solid #1e3a5a;">
-      <th style="padding:8px; text-align:left; color:#64748b; font-weight:500;">Property</th>
-      <th style="padding:8px; text-align:left; color:#64748b; font-weight:500;">Check-in</th>
-      <th style="padding:8px; text-align:left; color:#64748b; font-weight:500;">Check-out</th>
-      <th style="padding:8px; text-align:center; color:#64748b; font-weight:500;">Nights</th>
-      <th style="padding:8px; text-align:center; color:#64748b; font-weight:500;">Status</th>
-      <th style="padding:8px; text-align:right; color:#64748b; font-weight:500;">Cost</th>
-      <th style="padding:8px; text-align:right; color:#64748b; font-weight:500;">Code</th>
-    </tr></thead><tbody>` +
-    myBookings.map(b => `<tr style="border-bottom:1px solid #1e3a5a;">
-      <td style="padding:12px 8px;"><div style="font-weight:600; color:#f1f5f9;">${b.property_name}</div><div style="font-size:11px; color:#64748b;">${b.pool_name.split(' ').slice(0,2).join(' ')}</div></td>
-      <td style="padding:12px 8px; color:#94a3b8;">${b.check_in}</td>
-      <td style="padding:12px 8px; color:#94a3b8;">${b.check_out}</td>
-      <td style="padding:12px 8px; text-align:center; color:#38bdf8; font-weight:700;">${b.nights}</td>
-      <td style="padding:12px 8px; text-align:center;"><span class="badge ${b.status==='Confirmed'?'badge-active':b.status==='Pending'?'badge-funding':'badge-income'}">${b.status}</span></td>
-      <td style="padding:12px 8px; text-align:right; color:#22c55e;">$${b.cleaning_fee}</td>
-      <td style="padding:12px 8px; text-align:right; font-size:11px; color:#64748b;">${b.confirmation_code}</td>
-    </tr>`).join('') +
-    '</tbody></table></div>';
-}
-
-// ======================= MARKETPLACE =======================
-function renderMarketplace() {
-  const grid = document.getElementById('marketplace-grid');
-  grid.innerHTML = marketListings.map(m => {
-    const pool = pools.find(p => p.id === m.pool_id);
-    const discount = m.premium_discount_pct;
-    return `
-    <div class="shard-card" style="padding:24px;">
-      <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:16px;">
-        <div>
-          <div style="font-size:15px; font-weight:700; color:#f1f5f9;">${m.pool_name}</div>
-          <div style="font-size:12px; color:#64748b; margin-top:4px;">${pool?.location}</div>
-        </div>
-        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
-          <span class="badge badge-active">${m.status}</span>
-          ${m.includes_usage_rights ? `<span class="badge badge-vacation">🏖️ +${m.shard_nights_included} nights</span>` : ''}
-        </div>
-      </div>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
-        <div style="background:rgba(56,189,248,0.07); border-radius:10px; padding:12px; text-align:center;">
-          <div style="font-size:20px; font-weight:800; color:#38bdf8;">$${m.ask_price_per_shard.toFixed(2)}</div>
-          <div style="font-size:10px; color:#64748b;">Ask Price / Shard</div>
-        </div>
-        <div style="background:rgba(56,189,248,0.04); border-radius:10px; padding:12px; text-align:center;">
-          <div style="font-size:20px; font-weight:800; color:#94a3b8;">$${m.nav_per_shard.toFixed(2)}</div>
-          <div style="font-size:10px; color:#64748b;">NAV / Shard</div>
-        </div>
-      </div>
-      <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; margin-bottom:8px;">
-        <span style="color:#64748b;">Shards for sale:</span>
-        <span style="color:#f1f5f9; font-weight:600;">${m.shards_for_sale.toLocaleString()}</span>
-      </div>
-      <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; margin-bottom:8px;">
-        <span style="color:#64748b;">Total ask:</span>
-        <span style="color:#f1f5f9; font-weight:600;">$${m.total_ask.toLocaleString()}</span>
-      </div>
-      <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; margin-bottom:16px;">
-        <span style="color:#64748b;">vs NAV:</span>
-        <span style="color:${discount >= 0 ? '#ef4444' : '#22c55e'}; font-weight:700;">${discount >= 0 ? '+' : ''}${discount.toFixed(2)}% ${discount < 0 ? '🔥 Discount' : 'Premium'}</span>
-      </div>
-      ${m.includes_usage_rights ? `
-      <div style="background:rgba(56,189,248,0.07); border:1px solid rgba(56,189,248,0.2); border-radius:8px; padding:10px; margin-bottom:16px; font-size:12px; color:#94a3b8;">
-        <img src="${SHARD_IMG}" style="height:14px; vertical-align:middle; margin-right:4px;" />
-        Includes <strong style="color:#38bdf8;">${m.shard_nights_included} Shard Night${m.shard_nights_included > 1 ? 's' : ''}</strong> transferred from seller's allocation
-      </div>` : ''}
-      <div style="font-size:11px; color:#64748b; margin-bottom:12px;">Expires: ${m.expires_at}</div>
-      <button class="glow-btn" style="width:100%;" onclick="showSuccessToast('Purchase order placed for ${m.shards_for_sale} Shards ✦')">Buy ${m.shards_for_sale.toLocaleString()} Shards</button>
-    </div>`;
-  }).join('');
-}
-
-function openSellModal() {
-  document.getElementById('sell-modal-content').innerHTML = `
-    <label style="font-size:12px; color:#94a3b8; display:block; margin-bottom:6px;">Select Pool</label>
-    <select class="input-field" id="sell-pool" style="margin-bottom:16px;" onchange="updateSellPreview()">
-      ${holdings.map(h => `<option value="${h.pool_id}">${h.pool_name} (${h.shards_owned.toLocaleString()} owned)</option>`).join('')}
-    </select>
-    <label style="font-size:12px; color:#94a3b8; display:block; margin-bottom:6px;">Shards to Sell</label>
-    <input type="number" id="sell-shards" class="input-field" placeholder="Number of shards" style="margin-bottom:16px;" oninput="updateSellPreview()" />
-    <label style="font-size:12px; color:#94a3b8; display:block; margin-bottom:6px;">Ask Price per Shard ($)</label>
-    <input type="number" id="sell-price" class="input-field" placeholder="e.g. 10.82" step="0.01" style="margin-bottom:16px;" oninput="updateSellPreview()" />
-    <div style="display:flex; align-items:center; gap:8px; margin-bottom:20px;">
-      <input type="checkbox" id="sell-include-nights" style="accent-color:#38bdf8;" />
-      <label for="sell-include-nights" style="font-size:13px; color:#94a3b8; cursor:pointer;">Include Shard Nights in transfer</label>
-    </div>
-    <div id="sell-preview" style="background:rgba(56,189,248,0.05); border:1px solid #1e3a5a; border-radius:10px; padding:16px; margin-bottom:20px; font-size:13px; color:#64748b;">Fill in details above to preview your listing</div>
-    <button class="glow-btn" style="width:100%;" onclick="confirmSell()">List for Sale</button>`;
-  document.getElementById('sell-modal').classList.remove('hidden');
-}
-
-function updateSellPreview() {
-  const poolId = document.getElementById('sell-pool')?.value;
-  const shards = parseInt(document.getElementById('sell-shards')?.value) || 0;
-  const price = parseFloat(document.getElementById('sell-price')?.value) || 0;
-  const pool = pools.find(p => p.id === poolId);
-  const el = document.getElementById('sell-preview');
-  if (shards && price && pool) {
-    const total = shards * price;
-    const vsNav = ((price - pool.nav_per_shard) / pool.nav_per_shard * 100).toFixed(2);
-    el.innerHTML = `<strong style="color:#f1f5f9;">Listing: ${shards.toLocaleString()} Shards @ $${price}</strong><br/>Total: $${total.toLocaleString()}<br/>vs NAV: <span style="color:${parseFloat(vsNav)>=0?'#ef4444':'#22c55e'}">${parseFloat(vsNav)>=0?'+':''}${vsNav}%</span>`;
-  }
-}
-
-function confirmSell() {
-  closeModal('sell-modal');
-  showSuccessToast('Listing submitted to marketplace ✦');
-}
-
-// ======================= DEFI =======================
-function renderDeFi() {
-  const tableEl = document.getElementById('defi-rights-table');
-  tableEl.innerHTML = `
-  <div style="font-size:13px;">
-    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; padding:8px 0; border-bottom:1px solid #1e3a5a; color:#64748b; font-size:11px;">
-      <span>Pool</span><span>Collateral</span><span>Rights Status</span>
-    </div>` +
-    holdings.filter(h => h.collateral_locked > 0).map(h => {
-      const collRatio = h.collateral_locked / h.shards_owned;
-      return `<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; padding:10px 0; border-bottom:1px solid #1e3a5a; align-items:center;">
-        <span style="color:#f1f5f9; font-size:12px;">${h.pool_name.split(' ').slice(0,2).join(' ')}</span>
-        <span style="color:#f97316; font-size:12px;">${h.collateral_locked} Shards</span>
-        <span style="font-size:11px; color:${collRatio > 0.8 ? '#ef4444' : '#22c55e'};">${collRatio > 0.8 ? '⚠️ Suspended' : '✓ Active'}</span>
-      </div>`;
-    }).join('') +
-    '</div>';
-
-  const posEl = document.getElementById('defi-positions');
-  posEl.innerHTML = `<div style="overflow-x:auto;"><table style="width:100%; border-collapse:collapse; font-size:13px;">
-    <thead><tr style="border-bottom:1px solid #1e3a5a;">
-      <th style="padding:10px; text-align:left; color:#64748b; font-weight:500;">Pool</th>
-      <th style="padding:10px; text-align:right; color:#64748b; font-weight:500;">Shards Locked</th>
-      <th style="padding:10px; text-align:right; color:#64748b; font-weight:500;">Collateral Value</th>
-      <th style="padding:10px; text-align:right; color:#64748b; font-weight:500;">Borrow Capacity</th>
-      <th style="padding:10px; text-align:center; color:#64748b; font-weight:500;">Rights</th>
-      <th style="padding:10px; text-align:center; color:#64748b; font-weight:500;">Action</th>
-    </tr></thead><tbody>` +
-    holdings.filter(h => h.collateral_locked > 0).map(h => {
-      const pool = pools.find(p => p.id === h.pool_id);
-      const collVal = h.collateral_locked * (pool?.nav_per_shard || 10);
-      return `<tr style="border-bottom:1px solid #1e3a5a;">
-        <td style="padding:12px 10px;"><div style="font-weight:600; color:#f1f5f9;">${h.pool_name}</div></td>
-        <td style="padding:12px 10px; text-align:right; color:#f97316;">${h.collateral_locked.toLocaleString()}</td>
-        <td style="padding:12px 10px; text-align:right; color:#f1f5f9;">$${collVal.toLocaleString()}</td>
-        <td style="padding:12px 10px; text-align:right; color:#22c55e;">$${(collVal * 0.7).toLocaleString()}</td>
-        <td style="padding:12px 10px; text-align:center;"><span class="badge badge-active">Active</span></td>
-        <td style="padding:12px 10px; text-align:center;"><button onclick="showSuccessToast('Release request submitted ✦')" style="font-size:11px; padding:4px 12px; border-radius:6px; border:1px solid #1e3a5a; background:transparent; color:#94a3b8; cursor:pointer;">Release</button></td>
-      </tr>`;
-    }).join('') +
-    '</tbody></table></div>';
-}
-
-function openDefiModal() {
-  document.getElementById('defi-modal-content').innerHTML = `
-  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;">
-    <div style="background:rgba(56,189,248,0.07); border-radius:10px; padding:16px; text-align:center;">
-      <div style="font-size:11px; color:#64748b; margin-bottom:4px;">Available to Deposit</div>
-      <div style="font-size:24px; font-weight:800; color:#38bdf8;">9,800 Shards</div>
-    </div>
-    <div style="background:rgba(249,115,22,0.07); border-radius:10px; padding:16px; text-align:center;">
-      <div style="font-size:11px; color:#64748b; margin-bottom:4px;">Currently Locked</div>
-      <div style="font-size:24px; font-weight:800; color:#f97316;">3,500 Shards</div>
-    </div>
-  </div>
-  <div style="margin-bottom:16px;">
-    <label style="font-size:12px; color:#94a3b8; display:block; margin-bottom:6px;">Deposit Shards as Collateral</label>
-    <input type="number" id="defi-deposit" class="input-field" placeholder="Number of shards" style="margin-bottom:8px;" />
-    <div style="font-size:11px; color:#64748b;">Note: Depositing shards may reduce your Shard Night allocation proportionally.</div>
-  </div>
-  <button class="glow-btn" style="width:100%; margin-bottom:10px;" onclick="closeModal('defi-modal'); showSuccessToast('Collateral deposit submitted ✦')">Deposit Collateral</button>
-  <button onclick="closeModal('defi-modal'); showSuccessToast('Release request submitted ✦')" style="width:100%; padding:12px; border-radius:12px; border:1px solid #1e3a5a; background:transparent; color:#64748b; cursor:pointer;">Release All Collateral</button>`;
-  document.getElementById('defi-modal').classList.remove('hidden');
-}
-
-// ======================= LEARN =======================
-const learnContent = {
-  basics: {
-    title: 'How ShardForge Works',
-    content: `
-    <div style="line-height:1.7; color:#94a3b8;">
-      <h3 style="color:#38bdf8; font-size:16px; margin-bottom:12px;">What are Shards?</h3>
-      <p style="margin-bottom:16px;">Shards are ERC-20 tokens representing fractional ownership in a curated pool of real physical assets. Each pool holds multiple properties, land parcels, or precious metals — Shards represent your pro-rata slice of that pool's total value and income.</p>
-      <h3 style="color:#38bdf8; font-size:16px; margin-bottom:12px;">How Distributions Work</h3>
-      <p style="margin-bottom:16px;">Every week (or monthly for some pools), rental income, lease payments, and commodity appreciation flow into the pool's smart contract. Your proportional share is automatically distributed to your wallet — or auto-reinvested if you enable that option.</p>
-      <h3 style="color:#38bdf8; font-size:16px; margin-bottom:12px;">Fractal Pools</h3>
-      <p style="margin-bottom:16px;">The ShardForge Meta-Pool is a "fractal" pool — it holds Shards from other pools. This gives you diversified exposure across all asset types with a single investment. Returns are composite, and Shard Night access is allocated proportionally to the vacation pool weights within the meta-pool.</p>
-      <div style="background:rgba(56,189,248,0.07); border:1px solid rgba(56,189,248,0.2); border-radius:12px; padding:16px; margin-top:20px;">
-        <div style="color:#38bdf8; font-weight:700; margin-bottom:8px;">💡 Key Numbers</div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:13px;">
-          <div>Min investment: <strong style="color:#f1f5f9;">$10</strong></div>
-          <div>Mgmt fee: <strong style="color:#f1f5f9;">0.6–1.2%</strong></div>
-          <div>Target APY: <strong style="color:#f1f5f9;">6–10%</strong></div>
-          <div>Distribution: <strong style="color:#f1f5f9;">Weekly</strong></div>
-        </div>
-      </div>
-    </div>`
-  },
-  nights: {
-    title: 'Shard Nights — Your Lifestyle Benefit',
-    content: `
-    <div style="line-height:1.7; color:#94a3b8;">
-      <h3 style="color:#38bdf8; font-size:16px; margin-bottom:12px;">What are Shard Nights?</h3>
-      <p style="margin-bottom:16px;">Shard Nights are your annual allocation of free/discounted nights at vacation properties within your pools. You earn them automatically by holding Shards in eligible vacation rental pools — no extra action required.</p>
-      <h3 style="color:#38bdf8; font-size:16px; margin-bottom:12px;">How the Allocation Works</h3>
-      <p style="margin-bottom:16px;"><strong style="color:#f1f5f9;">Pro-rata formula:</strong> Your ownership % × pool's annual cap rate × total vacant nights available.</p>
-      <p style="margin-bottom:16px;">Example: You own <strong style="color:#f1f5f9;">0.595%</strong> of Coastal Escape → 0.595 × 3.5 nights/1% → <strong style="color:#38bdf8;">~20 Shard Nights/year</strong></p>
-      <h3 style="color:#38bdf8; font-size:16px; margin-bottom:12px;">Priority Window</h3>
-      <p style="margin-bottom:16px;">Shard holders get a <strong style="color:#f1f5f9;">30–45 day advance booking window</strong> before properties are listed on Airbnb/VRBO. You always have first pick of the best dates.</p>
-      <h3 style="color:#38bdf8; font-size:16px; margin-bottom:12px;">What You Pay</h3>
-      <p style="margin-bottom:16px;">During your member stay, you only pay the <strong style="color:#22c55e;">cleaning/maintenance fee ($95–$120)</strong>. No nightly rental rate is charged. The public market rate is credited toward your effective IRR as "usage value."</p>
-      <div style="background:rgba(34,197,94,0.07); border:1px solid rgba(34,197,94,0.2); border-radius:12px; padding:16px; margin-top:20px;">
-        <div style="color:#22c55e; font-weight:700; margin-bottom:8px;">✓ Vacancy Optimization</div>
-        <p style="font-size:13px;">Vacant periods not used by members are automatically listed on Airbnb/VRBO. Income from those bookings still flows to <strong style="color:#f1f5f9;">all Shard holders</strong> proportionally. Your member stay during a vacancy period reduces vacancy drag without reducing your returns.</p>
-      </div>
-    </div>`
-  },
-  irr: {
-    title: 'Effective IRR — Your Real Return',
-    content: `
-    <div style="line-height:1.7; color:#94a3b8;">
-      <h3 style="color:#38bdf8; font-size:16px; margin-bottom:12px;">Why Standard APY Understates Your Return</h3>
-      <p style="margin-bottom:16px;">Traditional investment platforms show you APY based on cash distributions alone. For vacation rental pools, this misses a major source of value: <strong style="color:#f1f5f9;">the lifestyle benefit of Shard Nights</strong>.</p>
-      <h3 style="color:#38bdf8; font-size:16px; margin-bottom:12px;">The Effective IRR Formula</h3>
-      <div style="background:rgba(56,189,248,0.07); border:1px solid rgba(56,189,248,0.15); border-radius:12px; padding:16px; margin-bottom:16px; font-family:monospace; font-size:13px; color:#38bdf8;">
-        Effective IRR = (Rental Income + Appreciation + Usage Value) / Investment
-      </div>
-      <p style="margin-bottom:16px;"><strong style="color:#f1f5f9;">Usage Value</strong> = Nights used × public market nightly rate (minus cleaning fee paid)</p>
-      <p style="margin-bottom:16px;">Example: 20 Shard Nights at $380/night = <strong style="color:#22c55e;">$7,600 value</strong>. On a $25,000 investment, that's an extra <strong style="color:#22c55e;">30% value</strong> — on top of your cash APY!</p>
-      <h3 style="color:#38bdf8; font-size:16px; margin-bottom:12px;">Dashboard Transparency</h3>
-      <p style="margin-bottom:8px;">Your dashboard always shows three components separately:</p>
-      <ul style="list-style:none; padding:0;">
-        <li style="padding:6px 0; border-bottom:1px solid #1e3a5a;"><span style="color:#22c55e;">●</span> Rental income yield</li>
-        <li style="padding:6px 0; border-bottom:1px solid #1e3a5a;"><span style="color:#38bdf8;">●</span> Appreciation gain</li>
-        <li style="padding:6px 0;"><span style="color:#a855f7;">●</span> Shard Night usage value</li>
-      </ul>
-    </div>`
-  },
-  defi: {
-    title: 'DeFi Collateral — Your Shards Do More',
-    content: `
-    <div style="line-height:1.7; color:#94a3b8;">
-      <h3 style="color:#38bdf8; font-size:16px; margin-bottom:12px;">Using Shards as Collateral</h3>
-      <p style="margin-bottom:16px;">ShardForge integrates with Aave-style lending markets (RMM protocol). You can deposit your Shards as collateral to borrow stablecoins — while your underlying assets continue generating income.</p>
-      <h3 style="color:#38bdf8; font-size:16px; margin-bottom:12px;">LTV and Health Factor</h3>
-      <p style="margin-bottom:16px;">Maximum LTV (Loan-to-Value) is <strong style="color:#f1f5f9;">70%</strong>. Your Health Factor must stay above 1.0 to avoid liquidation. We recommend maintaining HF > 1.5 for safety.</p>
-      <h3 style="color:#38bdf8; font-size:16px; margin-bottom:12px;">Impact on Shard Nights</h3>
-      <div style="background:rgba(251,191,36,0.08); border:1px solid rgba(251,191,36,0.2); border-radius:12px; padding:16px; margin-bottom:16px;">
-        <div style="color:#fbbf24; font-weight:700; margin-bottom:8px;">⚠️ Usage Rights Policy</div>
-        <p style="font-size:13px;">When Shards are locked as collateral, your Shard Night allocation is <strong style="color:#f1f5f9;">proportionally reduced</strong> based on the locked/total ratio. Collateralizing >80% of your holdings temporarily suspends booking privileges until shards are released.</p>
-      </div>
-      <p>Income distributions <strong style="color:#f1f5f9;">continue normally</strong> even on collateralized Shards — only usage rights are affected.</p>
-    </div>`
-  },
-  fractal: {
-    title: 'Fractal Nesting — Diversification Reimagined',
-    content: `
-    <div style="line-height:1.7; color:#94a3b8;">
-      <h3 style="color:#38bdf8; font-size:16px; margin-bottom:12px;">What is Fractal Nesting?</h3>
-      <p style="margin-bottom:16px;">In traditional finance, a fund-of-funds holds shares of other funds. ShardForge's meta-pool is the crypto-native equivalent: it holds <strong style="color:#f1f5f9;">Shards from multiple pools</strong>, giving you composite exposure with a single investment.</p>
-      <h3 style="color:#38bdf8; font-size:16px; margin-bottom:12px;">The ShardForge Meta-Pool</h3>
-      <div style="background:rgba(56,189,248,0.05); border:1px solid #1e3a5a; border-radius:12px; padding:16px; margin-bottom:16px;">
-        <div style="font-size:13px; display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-          <div>🏖️ Vacation Rentals: <strong style="color:#38bdf8;">21%</strong></div>
-          <div>🏢 Urban Real Estate: <strong style="color:#38bdf8;">35%</strong></div>
-          <div>🥇 Gold/Metals: <strong style="color:#38bdf8;">19%</strong></div>
-          <div>🌾 Farmland: <strong style="color:#38bdf8;">25%</strong></div>
-        </div>
-      </div>
-      <h3 style="color:#38bdf8; font-size:16px; margin-bottom:12px;">Indirect Shard Night Access</h3>
-      <p style="margin-bottom:16px;">Meta-pool holders receive a <strong style="color:#f1f5f9;">reduced Shard Night allocation</strong> proportional to the vacation pool weight (21%). This is ideal for investors who want diversification but still want some lifestyle access.</p>
-      <p>On-chain, the meta-pool contract is fully transparent — you can inspect the composition, weights, and NAV calculation at any time on Etherscan.</p>
-    </div>`
-  }
-};
-
-function renderLearn(section) {
-  document.querySelectorAll('#learn-tabs .tab-btn').forEach(b => b.classList.remove('active'));
-  const learnSectionTitles = {basics:'Basics', nights:'Shard Nights', irr:'Effective IRR', defi:'DeFi', fractal:'Fractal Nesting'};
-  document.querySelectorAll('#learn-tabs .tab-btn').forEach(b => {
-    if (b.textContent.trim() === (learnSectionTitles[section] || section)) b.classList.add('active');
-  });
-
-  const data = learnContent[section];
-  document.getElementById('learn-content').innerHTML = `
-  <div class="shard-card fade-in" style="padding:32px;">
-    <div style="display:flex; align-items:center; gap:12px; margin-bottom:24px;">
-      <img src="${SHARD_IMG}" style="height:40px;" class="crystal-img" />
-      <h2 style="font-size:22px; font-weight:800; color:#f1f5f9;">${data.title}</h2>
-    </div>
-    ${data.content}
-  </div>`;
-}
-
-function showLearn(section) {
-  renderLearn(section);
-}
-
-// ======================= UTILS =======================
-function closeModal(id) {
-  document.getElementById(id).classList.add('hidden');
-}
-
-function showSuccessToast(message) {
-  const toast = document.createElement('div');
-  toast.style.cssText = `position:fixed; bottom:24px; right:24px; background:linear-gradient(135deg,#0ea5e9,#38bdf8); color:white; padding:14px 24px; border-radius:12px; font-weight:700; font-size:14px; z-index:9999; animation:fadeInUp 0.3s ease; box-shadow:0 8px 30px rgba(56,189,248,0.4);`;
-  toast.textContent = message;
-  document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 3500);
-}
-
-// Close modals on overlay click
-['buy-modal','sell-modal','defi-modal','booking-confirm-modal'].forEach(id => {
-  document.getElementById(id)?.addEventListener('click', function(e) {
-    if (e.target === this) closeModal(id);
-  });
-});
-
-// ======================= INIT =======================
-initParticles();
-showPage('dashboard');
-</script>
 </body>
 </html>
+<script id="__base44_dark_class_post__">document.documentElement.classList.remove('dark');</script></body></html>
