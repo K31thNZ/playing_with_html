@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: moscow-activity-club
+    runtime: static
+    staticPublishPath: .
+    buildCommand: ""
+    pullRequestPreviewsEnabled: true
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: public, max-age=3600
